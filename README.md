@@ -112,19 +112,4 @@ The gateway exposes all services under the prefix `/api/v1/`.
     - `DataSourceRoutingAspect` intercepts transactions to set the correct context (`PRIMARY` vs `SECONDARY`).
     - Configured in `payment-service` with two HikariCP data sources.
 
-## 📊 **Performance Benchmarking**
-A Python-based load testing script (`load_test.py`) is provided to benchmark the system.
-- **Features**:
-    - Simulates User Registration and Authentication.
-    - Registers Merchants.
-    - Generates concurrent Payment functionality load.
-    - Measures Request Per Second (RPS) and Latency (P50, P95, P99).
-- **Execution**:
-    ```bash
-    python load_test.py
-    ```
-- **Note**: Ensure all services are running via `docker-compose up -d` before running the benchmark. The script bypasses the API Gateway (port 8080) and hits services directly (8081, 8082, 8083) for isolated testing.
 
-## License
-
-Proprietary - All Rights Reserved
