@@ -1,0 +1,81 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: payment-service
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    # Primary (Write)
+    primary:
+      jdbc-url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/payment_db}
+      username: postgres
+      password: postgres
+      driver-class-name: org.postgresql.Driver
+    # Secondary (Read)
+    secondary:
+      jdbc-url: ${SPRING_DATASOURCE_SECONDARY_URL:jdbc:postgresql://postgres-replica:5432/payment_db}
+      username: postgres
+      password: postgres
+      driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: payment-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+# JWT Configuration
+jwt:
+  secret: ThisIsAVeryLongSecretKeyForJWTTokenGenerationAndValidation12345
+  expiration: 3600000
+
+# Payment Configuration
+payment:
+  max-transaction-amount: 100000
+  settlement-delay-minutes: 30
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://otel-collector:4318/v1/traces}
+
+# Service Integration
+services:
+  vault:
+    url: ${VAULT_SERVICE_URL:http://vault-service:8084}
+  merchant:
+    url: ${MERCHANT_SERVICE_URL:http://merchant-service:8083}
+
+# Logging
+logging:
+  level:
+    com.paymentgateway: DEBUG
+    org.hibernate.SQL: DEBUG

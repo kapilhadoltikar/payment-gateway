@@ -7,6 +7,13 @@
         <option value="$PROJECT_DIR$/pom.xml" />
       </list>
     </option>
+    <option name="ignoredFiles">
+      <set>
+        <option value="$PROJECT_DIR$/customer/pom.xml" />
+        <option value="$PROJECT_DIR$/eureka-server/pom.xml" />
+        <option value="$PROJECT_DIR$/fraud/pom.xml" />
+      </set>
+    </option>
   </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="temurin-25" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />

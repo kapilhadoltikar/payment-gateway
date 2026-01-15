@@ -1,43 +1,86 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.upi</groupId>
-  <artifactId>universal-payment-interface</artifactId>
-  <version>1.0.0</version>
+  <groupId>com.paymentgateway</groupId>
+  <artifactId>payment-gateway-parent</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <name>universal-payment-interface</name>
-  <url>https://www.upi.com</url>
+  <name>Payment Gateway - Parent</name>
+  <description>Payment Gateway Microservices - Parent POM</description>
 
   <modules>
-    <module>customer</module>
-    <module>fraud</module>
-    <module>eureka-server</module>
-
+    <module>common</module>
+    <module>api-gateway</module>
+    <module>auth-service</module>
+    <module>payment-service</module>
+    <module>merchant-service</module>
+    <module>vault-service</module>
+    <module>notification-service</module>
   </modules>
 
   <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <java.version>25</java.version>
     <maven.compiler.source>25</maven.compiler.source>
     <maven.compiler.target>25</maven.compiler.target>
-    <spring.boot.maven.plugin.version>4.0.1</spring.boot.maven.plugin.version>
-    <spring.boot.dependencies.version>4.0.1</spring.boot.dependencies.version>
-    <spring-cloud.version>2025.1.0</spring-cloud.version>
+    <maven.compiler.release>25</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <!-- Spring Boot 4.0.x -->
+    <spring-boot.version>4.0.1</spring-boot.version>
+    <spring-cloud.version>2025.0.0</spring-cloud.version>
+
+    <!-- Messaging -->
+    <kafka.version>3.9.0</kafka.version>
+
+    <!-- Observability -->
+    <opentelemetry.version>2.20.0</opentelemetry.version>
+
+    <!-- Database -->
+    <postgresql.version>42.7.8</postgresql.version>
+
+    <!-- Security -->
+    <jjwt.version>0.12.6</jjwt.version>
+
+    <!-- Utilities - Lombok Edge with Java 25 support -->
+    <lombok.version>edge-SNAPSHOT</lombok.version>
+    <testcontainers.version>1.20.5</testcontainers.version>
+
+    <!-- Virtual Threads -->
+    <spring.threads.virtual.enabled>true</spring.threads.virtual.enabled>
   </properties>
 
-<!--All microservices can have maven spring boot dependencies-->
+  <!-- Add Lombok Edge repository -->
+  <repositories>
+    <repository>
+      <id>projectlombok.org</id>
+      <url>https://projectlombok.org/edge-releases</url>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>projectlombok.org</id>
+      <url>https://projectlombok.org/edge-releases</url>
+    </pluginRepository>
+  </pluginRepositories>
+
   <dependencyManagement>
     <dependencies>
-
+      <!-- Spring Boot BOM -->
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
-        <version>${spring.boot.dependencies.version}</version>
-        <scope>import</scope>
+        <version>${spring-boot.version}</version>
         <type>pom</type>
+        <scope>import</scope>
       </dependency>
 
+      <!-- Spring Cloud BOM -->
       <dependency>
         <groupId>org.springframework.cloud</groupId>
         <artifactId>spring-cloud-dependencies</artifactId>
@@ -46,32 +89,101 @@
         <scope>import</scope>
       </dependency>
 
+      <!-- OpenTelemetry BOM -->
+      <dependency>
+        <groupId>io.opentelemetry.instrumentation</groupId>
+        <artifactId>opentelemetry-instrumentation-bom</artifactId>
+        <version>${opentelemetry.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- PostgreSQL -->
+      <dependency>
+        <groupId>org.postgresql</groupId>
+        <artifactId>postgresql</artifactId>
+        <version>${postgresql.version}</version>
+      </dependency>
+
+      <!-- JWT -->
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-api</artifactId>
+        <version>${jjwt.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-impl</artifactId>
+        <version>${jjwt.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-jackson</artifactId>
+        <version>${jjwt.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+
+      <!-- Lombok Edge (Java 25 compatible) -->
+      <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <version>${lombok.version}</version>
+      </dependency>
+
+      <!-- Testcontainers -->
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers-bom</artifactId>
+        <version>${testcontainers.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
-
-<!--these dependencies will be common to all microservices no need to include separately-->
-  <dependencies>
-    <dependency>
-      <groupId>org.projectlombok</groupId>
-      <artifactId>lombok</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
-    </dependency>
-  </dependencies>
 
   <build>
     <pluginManagement>
       <plugins>
         <plugin>
-          <groupId>com.springframework.boot</groupId>
-            <artifactId>spring-boot-maven-plugin</artifactId>
-            <version>${spring.boot.maven.plugin.version}</version>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-maven-plugin</artifactId>
+          <version>${spring-boot.version}</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>repackage</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <excludes>
+              <exclude>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+              </exclude>
+            </excludes>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.11.0</version>
+          <configuration>
+            <source>${maven.compiler.source}</source>
+            <target>${maven.compiler.target}</target>
+            <release>${maven.compiler.release}</release>
+            <fork>true</fork>
+            <annotationProcessorPaths>
+              <path>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+              </path>
+            </annotationProcessorPaths>
+          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>
   </build>
-
 </project>
