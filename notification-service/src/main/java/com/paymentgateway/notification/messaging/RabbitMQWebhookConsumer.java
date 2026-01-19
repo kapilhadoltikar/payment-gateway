@@ -4,13 +4,10 @@ import com.paymentgateway.common.model.Transaction;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 @Slf4j
 @Service
 public class RabbitMQWebhookConsumer {
-
-    private final RestTemplate restTemplate = new RestTemplate();
 
     @RabbitListener(queues = "webhook-queue")
     public void consume(Transaction transaction) {

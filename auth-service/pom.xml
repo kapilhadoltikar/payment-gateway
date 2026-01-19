@@ -14,6 +14,10 @@
     <artifactId>auth-service</artifactId>
     <packaging>jar</packaging>
 
+    <properties>
+        <native.skip>false</native.skip>
+    </properties>
+
     <name>Auth Service</name>
     <description>OAuth2 Authorization Server</description>
 
@@ -69,7 +73,49 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <image>
+                        <builder>paketobuildpacks/builder:tiny</builder>
+                        <env>
+                            <BP_NATIVE_IMAGE>true</BP_NATIVE_IMAGE>
+                        </env>
+                    </image>
+                </configuration>
             </plugin>
+            
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>native</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <version>${native-maven-plugin.version}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <imageName>auth-service</imageName>
+                            <mainClass>com.paymentgateway.auth.AuthServiceApplication</mainClass>
+                            <buildArgs>
+                                <arg>--no-fallback</arg>
+                                <arg>--verbose</arg>
+                            </buildArgs>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>build-native</id>
+                                <goals>
+                                    <goal>compile</goal>
+                                </goals>
+                                <phase>prepare-package</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

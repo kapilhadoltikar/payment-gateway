@@ -1,0 +1,14 @@
+apiVersion: v2
+name: payment-gateway
+description: A Helm chart for Payment Gateway Microservices with GraalVM Native Image and CRaC optimization
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - payment-gateway
+  - graalvm
+  - native-image
+  - crac
+  - spring-boot
+maintainers:
+  - name: Payment Gateway Team

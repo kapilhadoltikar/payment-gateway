@@ -1,0 +1,84 @@
+version: "3"
+
+vars:
+  JAVA_VERSION: 25
+  SERVICES:
+    - api-gateway
+    - auth-service
+    - merchant-service
+    - notification-service
+    - payment-service
+    - vault-service
+    - fraud-service
+
+tasks:
+  default:
+    desc: List all tasks
+    cmds:
+      - task --list
+
+  build:
+    desc: Build all services (JVM)
+    cmds:
+      - task: build-common
+      - task: build-all-services
+
+  build-common:
+    internal: true
+    sources:
+      - common/src/**/*
+      - common/pom.xml
+    generates:
+      - common/target/*.jar
+    cmds:
+      - ./mvnw clean install -DskipTests -pl common -am
+
+  build-all-services:
+    internal: true
+    deps:
+      - for:
+          var: SERVICES
+        task: build-service
+        vars: { SERVICE: "{{.ITEM}}" }
+
+  build-service:
+    label: "build:{{.SERVICE}}"
+    desc: Build a specific service
+    dir: "{{.SERVICE}}"
+    sources:
+      - src/**/*
+      - pom.xml
+    generates:
+      - target/*.jar
+    cmds:
+      - ../mvnw clean package -DskipTests -pl {{.SERVICE}}
+
+  build:native:
+    desc: Build all native images using multi-stage Docker
+    cmds:
+      - task: build-common
+      - task: build-all-native
+
+  build-all-native:
+    internal: true
+    deps:
+      - for:
+          var: SERVICES
+        task: build-native-service
+        vars: { SERVICE: "{{.ITEM}}" }
+
+  build-native-service:
+    label: "native:{{.SERVICE}}"
+    desc: Build native image for {{.SERVICE}}
+    cmds:
+      - docker build --build-arg SERVICE_NAME={{.SERVICE}} -f Dockerfile.native -t payment-gateway/{{.SERVICE}}:native .
+
+  test:
+    desc: Run tests for all services
+    cmds:
+      - ./mvnw test
+
+  clean:
+    desc: Clean all build artifacts
+    cmds:
+      - ./mvnw clean

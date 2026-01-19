@@ -1,0 +1,110 @@
+{{- if .Values.vaultService.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.vaultService.name }}
+  labels:
+    app: {{ .Values.vaultService.name }}
+    version: {{ .Values.vaultService.image.tag }}
+    runtime: graalvm-native-static
+spec:
+  replicas: {{ .Values.vaultService.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.vaultService.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.vaultService.name }}
+        version: {{ .Values.vaultService.image.tag }}
+        runtime: graalvm-native-static
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8083"
+        prometheus.io/path: "/actuator/prometheus"
+        container.apparmor.security.beta.kubernetes.io/vault-service: runtime/default
+    spec:
+      securityContext:
+        runAsNonRoot: {{ .Values.vaultService.securityContext.runAsNonRoot }}
+        runAsUser: {{ .Values.vaultService.securityContext.runAsUser }}
+        fsGroup: {{ .Values.vaultService.securityContext.runAsUser }}
+      containers:
+      - name: {{ .Values.vaultService.name }}
+        image: "{{ .Values.global.registry }}/{{ .Values.vaultService.image.repository }}:{{ .Values.vaultService.image.tag }}"
+        imagePullPolicy: {{ .Values.vaultService.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 8083
+          protocol: TCP
+        env:
+        {{- range .Values.vaultService.env }}
+        - name: {{ .name }}
+          value: {{ .value | quote }}
+        {{- end }}
+        
+        # Security context for distroless static binary
+        securityContext:
+          readOnlyRootFilesystem: {{ .Values.vaultService.securityContext.readOnlyRootFilesystem }}
+          allowPrivilegeEscalation: {{ .Values.vaultService.securityContext.allowPrivilegeEscalation }}
+          capabilities:
+            drop:
+            {{- range .Values.vaultService.securityContext.capabilities.drop }}
+            - {{ . }}
+            {{- end }}
+        
+        # GraalVM Static Native Image: Ultra-fast startup with 1s initialDelay
+        {{- if .Values.vaultService.probes.startup.enabled }}
+        startupProbe:
+          httpGet:
+            path: {{ .Values.vaultService.probes.startup.httpGet.path }}
+            port: {{ .Values.vaultService.probes.startup.httpGet.port }}
+          initialDelaySeconds: {{ .Values.vaultService.probes.startup.initialDelaySeconds }}
+          periodSeconds: {{ .Values.vaultService.probes.startup.periodSeconds }}
+          timeoutSeconds: {{ .Values.vaultService.probes.startup.timeoutSeconds }}
+          successThreshold: {{ .Values.vaultService.probes.startup.successThreshold }}
+          failureThreshold: {{ .Values.vaultService.probes.startup.failureThreshold }}
+        {{- end }}
+        
+        {{- if .Values.vaultService.probes.readiness.enabled }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.vaultService.probes.readiness.httpGet.path }}
+            port: {{ .Values.vaultService.probes.readiness.httpGet.port }}
+          initialDelaySeconds: {{ .Values.vaultService.probes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.vaultService.probes.readiness.periodSeconds }}
+          timeoutSeconds: {{ .Values.vaultService.probes.readiness.timeoutSeconds }}
+          successThreshold: {{ .Values.vaultService.probes.readiness.successThreshold }}
+          failureThreshold: {{ .Values.vaultService.probes.readiness.failureThreshold }}
+        {{- end }}
+        
+        {{- if .Values.vaultService.probes.liveness.enabled }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.vaultService.probes.liveness.httpGet.path }}
+            port: {{ .Values.vaultService.probes.liveness.httpGet.port }}
+          initialDelaySeconds: {{ .Values.vaultService.probes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.vaultService.probes.liveness.periodSeconds }}
+          timeoutSeconds: {{ .Values.vaultService.probes.liveness.timeoutSeconds }}
+          successThreshold: {{ .Values.vaultService.probes.liveness.successThreshold }}
+          failureThreshold: {{ .Values.vaultService.probes.liveness.failureThreshold }}
+        {{- end }}
+        
+        resources:
+          {{- toYaml .Values.vaultService.resources | nindent 10 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.vaultService.name }}
+  labels:
+    app: {{ .Values.vaultService.name }}
+spec:
+  type: {{ .Values.vaultService.service.type }}
+  ports:
+  - port: {{ .Values.vaultService.service.port }}
+    targetPort: {{ .Values.vaultService.service.targetPort }}
+    protocol: TCP
+    name: http
+  selector:
+    app: {{ .Values.vaultService.name }}
+{{- end }}

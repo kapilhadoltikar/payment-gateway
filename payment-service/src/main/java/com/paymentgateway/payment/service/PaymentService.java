@@ -26,6 +26,7 @@ public class PaymentService {
     private final VaultClient vaultClient;
     private final MerchantClient merchantClient;
     private final KafkaProducer kafkaProducer;
+    private final com.paymentgateway.payment.client.FraudClient fraudClient;
 
     @Transactional
     public Transaction processPayment(PaymentRequest request) {
@@ -69,9 +70,45 @@ public class PaymentService {
                 .description(request.getDescription())
                 .build();
 
+        log.info("Saving Transaction: merchantId={}, amount={}, cardToken={}",
+                transaction.getMerchantId(), transaction.getAmount(), transaction.getCardToken());
+
         transaction = transactionRepository.save(transaction);
 
-        // 4. Process Path
+        // 4. Fraud Detection Check
+        try {
+            com.paymentgateway.fraud.dto.FraudCheckRequest fraudRequest = com.paymentgateway.fraud.dto.FraudCheckRequest
+                    .builder()
+                    .transactionId(transaction.getId())
+                    .merchantId(request.getMerchantId())
+                    .userId(request.getCustomerEmail()) // Using email as userId for now
+                    .amount(request.getAmount().doubleValue())
+                    .currency(request.getCurrency())
+                    .build();
+
+            com.paymentgateway.fraud.dto.FraudResult fraudResult = fraudClient.checkFraud(fraudRequest);
+
+            if (fraudResult.getDecision() == com.paymentgateway.fraud.dto.FraudResult.FraudDecision.BLOCK) {
+                log.warn("Transaction blocked by Fraud Service. Risk Score: {}", fraudResult.getRiskScore());
+                transaction.setStatus(Transaction.TransactionStatus.FAILED);
+                transaction.setFailureReason("High Risk Fraud Detected");
+                transactionRepository.save(transaction);
+                kafkaProducer.sendPaymentEvent(transaction);
+                return transaction;
+            } else if (fraudResult
+                    .getDecision() == com.paymentgateway.fraud.dto.FraudResult.FraudDecision.MANUAL_REVIEW) {
+                log.info("Transaction flagged for Manual Review (Gray Path). Risk Score: {}",
+                        fraudResult.getRiskScore());
+                // For demo, we designate this by modifying the description or log, but proceed
+                // to auth
+                transaction.setDescription(transaction.getDescription() + " [REVIEW REQUIRED]");
+            }
+
+        } catch (Exception e) {
+            log.error("Fraud check failed, failing open (allowing transaction) but logging error", e);
+        }
+
+        // 5. Process Path
         Transaction modernResult = processModernPath(transaction);
 
         return modernResult;

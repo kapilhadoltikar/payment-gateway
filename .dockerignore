@@ -1,0 +1,19 @@
+# Docker Ignore
+target/
+**/target/
+.git/
+.idea/
+.vscode/
+
+# Local GraalVM artifacts
+graalvm.zip
+.graalvm/
+
+# Other non-source files
+*.md
+scripts/
+monitoring/
+helm/
+k8s/
+docker-compose.yml
+load_test.py

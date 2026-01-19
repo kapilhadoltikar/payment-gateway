@@ -1,0 +1,95 @@
+{{- if .Values.authService.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.authService.name }}
+  labels:
+    app: {{ .Values.authService.name }}
+    version: {{ .Values.authService.image.tag }}
+    runtime: graalvm-native
+spec:
+  replicas: {{ .Values.authService.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.authService.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.authService.name }}
+        version: {{ .Values.authService.image.tag }}
+        runtime: graalvm-native
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8081"
+        prometheus.io/path: "/actuator/prometheus"
+    spec:
+      containers:
+      - name: {{ .Values.authService.name }}
+        image: "{{ .Values.global.registry }}/{{ .Values.authService.image.repository }}:{{ .Values.authService.image.tag }}"
+        imagePullPolicy: {{ .Values.authService.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 8081
+          protocol: TCP
+        env:
+        {{- range .Values.authService.env }}
+        - name: {{ .name }}
+          value: {{ .value | quote }}
+        {{- end }}
+        
+        # GraalVM Native Image: Fast startup with 1s initialDelay
+        {{- if .Values.authService.probes.startup.enabled }}
+        startupProbe:
+          httpGet:
+            path: {{ .Values.authService.probes.startup.httpGet.path }}
+            port: {{ .Values.authService.probes.startup.httpGet.port }}
+          initialDelaySeconds: {{ .Values.authService.probes.startup.initialDelaySeconds }}
+          periodSeconds: {{ .Values.authService.probes.startup.periodSeconds }}
+          timeoutSeconds: {{ .Values.authService.probes.startup.timeoutSeconds }}
+          successThreshold: {{ .Values.authService.probes.startup.successThreshold }}
+          failureThreshold: {{ .Values.authService.probes.startup.failureThreshold }}
+        {{- end }}
+        
+        {{- if .Values.authService.probes.readiness.enabled }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.authService.probes.readiness.httpGet.path }}
+            port: {{ .Values.authService.probes.readiness.httpGet.port }}
+          initialDelaySeconds: {{ .Values.authService.probes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.authService.probes.readiness.periodSeconds }}
+          timeoutSeconds: {{ .Values.authService.probes.readiness.timeoutSeconds }}
+          successThreshold: {{ .Values.authService.probes.readiness.successThreshold }}
+          failureThreshold: {{ .Values.authService.probes.readiness.failureThreshold }}
+        {{- end }}
+        
+        {{- if .Values.authService.probes.liveness.enabled }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.authService.probes.liveness.httpGet.path }}
+            port: {{ .Values.authService.probes.liveness.httpGet.port }}
+          initialDelaySeconds: {{ .Values.authService.probes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.authService.probes.liveness.periodSeconds }}
+          timeoutSeconds: {{ .Values.authService.probes.liveness.timeoutSeconds }}
+          successThreshold: {{ .Values.authService.probes.liveness.successThreshold }}
+          failureThreshold: {{ .Values.authService.probes.liveness.failureThreshold }}
+        {{- end }}
+        
+        resources:
+          {{- toYaml .Values.authService.resources | nindent 10 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.authService.name }}
+  labels:
+    app: {{ .Values.authService.name }}
+spec:
+  type: {{ .Values.authService.service.type }}
+  ports:
+  - port: {{ .Values.authService.service.port }}
+    targetPort: {{ .Values.authService.service.targetPort }}
+    protocol: TCP
+    name: http
+  selector:
+    app: {{ .Values.authService.name }}
+{{- end }}

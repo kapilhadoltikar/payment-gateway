@@ -1,0 +1,27 @@
+[
+    {
+        "name": "org.springframework.cloud.gateway.filter.factory.RequestRateLimiterGatewayFilterFactory",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "org.springframework.cloud.gateway.route.RouteLocator",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "org.springframework.cloud.gateway.handler.predicate.PathRoutePredicateFactory",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "org.springframework.cloud.gateway.handler.predicate.MethodRoutePredicateFactory",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    }
+]

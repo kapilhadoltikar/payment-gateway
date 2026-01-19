@@ -25,7 +25,7 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "merchant_id")
     private String merchantId;
 
     @Column(nullable = false, precision = 19, scale = 2)
@@ -38,30 +38,37 @@ public class Transaction {
     @Enumerated(EnumType.STRING)
     private TransactionStatus status;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "payment_method")
     @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
 
+    @Column(name = "card_token")
     private String cardToken;
 
+    @Column(name = "authorization_code")
     private String authorizationCode;
 
+    @Column(name = "reference_number")
     private String referenceNumber;
 
     @Column(length = 500)
     private String description;
 
+    @Column(name = "customer_email")
     private String customerEmail;
 
+    @Column(name = "failure_reason")
     private String failureReason;
 
     @CreationTimestamp
-    @Column(updatable = false)
+    @Column(updatable = false, name = "created_at")
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "settled_at")
     private LocalDateTime settledAt;
 
     public enum TransactionStatus {

@@ -1,0 +1,137 @@
+{{- if .Values.paymentService.enabled -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.paymentService.name }}-checkpoint-pvc
+  labels:
+    app: {{ .Values.paymentService.name }}
+spec:
+  accessModes:
+    - {{ .Values.paymentService.persistence.accessMode }}
+  {{- if .Values.paymentService.persistence.storageClass }}
+  storageClassName: {{ .Values.paymentService.persistence.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.paymentService.persistence.size }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.paymentService.name }}
+  labels:
+    app: {{ .Values.paymentService.name }}
+    version: {{ .Values.paymentService.image.tag }}
+    runtime: jit-crac
+spec:
+  replicas: {{ .Values.paymentService.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.paymentService.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.paymentService.name }}
+        version: {{ .Values.paymentService.image.tag }}
+        runtime: jit-crac
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8082"
+        prometheus.io/path: "/actuator/prometheus"
+    spec:
+      containers:
+      # Main payment-service container with CRaC
+      - name: {{ .Values.paymentService.name }}
+        image: "{{ .Values.global.registry }}/{{ .Values.paymentService.image.repository }}:{{ .Values.paymentService.image.tag }}"
+        imagePullPolicy: {{ .Values.paymentService.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 8082
+          protocol: TCP
+        env:
+        {{- range .Values.paymentService.env }}
+        - name: {{ .name }}
+          value: {{ .value | quote }}
+        {{- end }}
+        
+        # CRaC-aware startup probe with extended failure threshold
+        {{- if .Values.paymentService.probes.startup.enabled }}
+        startupProbe:
+          httpGet:
+            path: {{ .Values.paymentService.probes.startup.httpGet.path }}
+            port: {{ .Values.paymentService.probes.startup.httpGet.port }}
+          initialDelaySeconds: {{ .Values.paymentService.probes.startup.initialDelaySeconds }}
+          periodSeconds: {{ .Values.paymentService.probes.startup.periodSeconds }}
+          timeoutSeconds: {{ .Values.paymentService.probes.startup.timeoutSeconds }}
+          successThreshold: {{ .Values.paymentService.probes.startup.successThreshold }}
+          failureThreshold: {{ .Values.paymentService.probes.startup.failureThreshold }}
+        {{- end }}
+        
+        {{- if .Values.paymentService.probes.readiness.enabled }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.paymentService.probes.readiness.httpGet.path }}
+            port: {{ .Values.paymentService.probes.readiness.httpGet.port }}
+          initialDelaySeconds: {{ .Values.paymentService.probes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.paymentService.probes.readiness.periodSeconds }}
+          timeoutSeconds: {{ .Values.paymentService.probes.readiness.timeoutSeconds }}
+          successThreshold: {{ .Values.paymentService.probes.readiness.successThreshold }}
+          failureThreshold: {{ .Values.paymentService.probes.readiness.failureThreshold }}
+        {{- end }}
+        
+        {{- if .Values.paymentService.probes.liveness.enabled }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.paymentService.probes.liveness.httpGet.path }}
+            port: {{ .Values.paymentService.probes.liveness.httpGet.port }}
+          initialDelaySeconds: {{ .Values.paymentService.probes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.paymentService.probes.liveness.periodSeconds }}
+          timeoutSeconds: {{ .Values.paymentService.probes.liveness.timeoutSeconds }}
+          successThreshold: {{ .Values.paymentService.probes.liveness.successThreshold }}
+          failureThreshold: {{ .Values.paymentService.probes.liveness.failureThreshold }}
+        {{- end }}
+        
+        resources:
+          {{- toYaml .Values.paymentService.resources | nindent 10 }}
+        
+        # Mount CRaC checkpoint PVC
+        volumeMounts:
+        - name: crac-checkpoint
+          mountPath: {{ .Values.paymentService.persistence.mountPath }}
+      
+      {{- if .Values.paymentService.sidecar.enabled }}
+      # CRaC checkpoint manager sidecar
+      - name: {{ .Values.paymentService.sidecar.name }}
+        image: "{{ .Values.global.registry }}/{{ .Values.paymentService.sidecar.image.repository }}:{{ .Values.paymentService.sidecar.image.tag }}"
+        imagePullPolicy: {{ .Values.paymentService.sidecar.image.pullPolicy }}
+        resources:
+          {{- toYaml .Values.paymentService.sidecar.resources | nindent 10 }}
+        volumeMounts:
+        - name: crac-checkpoint
+          mountPath: {{ .Values.paymentService.persistence.mountPath }}
+        env:
+        - name: CHECKPOINT_PATH
+          value: {{ .Values.paymentService.persistence.mountPath }}
+      {{- end }}
+      
+      volumes:
+      - name: crac-checkpoint
+        persistentVolumeClaim:
+          claimName: {{ .Values.paymentService.name }}-checkpoint-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.paymentService.name }}
+  labels:
+    app: {{ .Values.paymentService.name }}
+spec:
+  type: {{ .Values.paymentService.service.type }}
+  ports:
+  - port: {{ .Values.paymentService.service.port }}
+    targetPort: {{ .Values.paymentService.service.targetPort }}
+    protocol: TCP
+    name: http
+  selector:
+    app: {{ .Values.paymentService.name }}
+{{- end }}

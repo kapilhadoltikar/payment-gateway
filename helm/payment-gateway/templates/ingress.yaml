@@ -1,0 +1,31 @@
+{{- if .Values.apiGateway.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: payment-gateway-ingress
+  annotations:
+    {{- range $key, $value := .Values.apiGateway.ingress.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.apiGateway.ingress.className }}
+  {{- if .Values.apiGateway.ingress.tls }}
+  tls:
+    {{- toYaml .Values.apiGateway.ingress.tls | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- range .Values.apiGateway.ingress.hosts }}
+    - host: {{ .host }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ $.Values.apiGateway.name }}
+                port:
+                  number: {{ $.Values.apiGateway.service.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}

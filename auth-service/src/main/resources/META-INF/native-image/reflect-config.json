@@ -1,0 +1,37 @@
+[
+    {
+        "name": "org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationServerConfiguration",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "org.springframework.security.oauth2.jwt.JwtEncoder",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "org.springframework.security.oauth2.jwt.JwtDecoder",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "io.jsonwebtoken.impl.DefaultJwtBuilder",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "io.jsonwebtoken.impl.DefaultJwtParser",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "org.postgresql.Driver",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    }
+]

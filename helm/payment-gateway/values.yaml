@@ -1,0 +1,466 @@
+# Payment Gateway Helm Values
+# Optimized for GraalVM Native Image and CRaC-enabled services
+
+global:
+  # Container registry configuration
+  registry: docker.io
+  imagePullPolicy: IfNotPresent
+
+  # Spring Boot 4 Actuator endpoints
+  actuator:
+    basePath: /actuator
+    healthEndpoint: /actuator/health
+    readinessEndpoint: /actuator/health/readiness
+    livenessEndpoint: /actuator/health/liveness
+
+  # Resource limits (conservative defaults)
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+# API Gateway (cloud-gateway) - GraalVM Native Image
+apiGateway:
+  enabled: true
+  name: api-gateway
+  replicaCount: 2
+
+  image:
+    repository: payment-gateway/api-gateway-native
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+
+  # GraalVM Native Image: Fast startup, use 1s initialDelay
+  probes:
+    startup:
+      enabled: true
+      httpGet:
+        path: /actuator/health/readiness
+        port: 8080
+      initialDelaySeconds: 1
+      periodSeconds: 2
+      timeoutSeconds: 3
+      successThreshold: 1
+      failureThreshold: 15 # 30s max startup time
+
+    readiness:
+      enabled: true
+      httpGet:
+        path: /actuator/health/readiness
+        port: 8080
+      initialDelaySeconds: 1
+      periodSeconds: 5
+      timeoutSeconds: 3
+      successThreshold: 1
+      failureThreshold: 3
+
+    liveness:
+      enabled: true
+      httpGet:
+        path: /actuator/health/liveness
+        port: 8080
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 3
+      successThreshold: 1
+      failureThreshold: 3
+
+  # Virtual Threads enabled - lower memory, higher concurrency
+  resources:
+    requests:
+      memory: "256Mi" # Native image uses less memory
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "1000m"
+
+  env:
+    - name: SPRING_PROFILES_ACTIVE
+      value: "production"
+    - name: SPRING_THREADS_VIRTUAL_ENABLED
+      value: "true"
+    - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+      value: "health,info,metrics,prometheus"
+
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    hosts:
+      - host: payment-gateway.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+
+# Auth Service - GraalVM Native Image
+authService:
+  enabled: true
+  name: auth-service
+  replicaCount: 2
+
+  image:
+    repository: payment-gateway/auth-service-native
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 8081
+    targetPort: 8081
+
+  # GraalVM Native Image: Fast startup, use 1s initialDelay
+  probes:
+    startup:
+      enabled: true
+      httpGet:
+        path: /actuator/health/readiness
+        port: 8081
+      initialDelaySeconds: 1
+      periodSeconds: 2
+      timeoutSeconds: 3
+      successThreshold: 1
+      failureThreshold: 15 # 30s max startup time
+
+    readiness:
+      enabled: true
+      httpGet:
+        path: /actuator/health/readiness
+        port: 8081
+      initialDelaySeconds: 1
+      periodSeconds: 5
+      timeoutSeconds: 3
+      successThreshold: 1
+      failureThreshold: 3
+
+    liveness:
+      enabled: true
+      httpGet:
+        path: /actuator/health/liveness
+        port: 8081
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 3
+      successThreshold: 1
+      failureThreshold: 3
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "1000m"
+
+  env:
+    - name: SPRING_PROFILES_ACTIVE
+      value: "production"
+    - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+      value: "health,info,metrics,prometheus"
+    - name: SPRING_DATASOURCE_URL
+      value: "jdbc:postgresql://postgresql:5432/authdb"
+
+# Payment Service - GraalVM Native Image
+paymentService:
+  enabled: true
+  name: payment-service
+  replicaCount: 3
+
+  image:
+    repository: payment-gateway/payment-service-native
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 8082
+    targetPort: 8082
+
+  # GraalVM Native Image: Fast startup
+  probes:
+    startup:
+      enabled: true
+      httpGet:
+        path: /actuator/health/readiness
+        port: 8082
+      initialDelaySeconds: 1
+      periodSeconds: 2
+      timeoutSeconds: 3
+      successThreshold: 1
+      failureThreshold: 15 # 30s max startup time
+
+    readiness:
+      enabled: true
+      httpGet:
+        path: /actuator/health/readiness
+        port: 8082
+      initialDelaySeconds: 1
+      periodSeconds: 5
+      timeoutSeconds: 3
+      successThreshold: 1
+      failureThreshold: 3
+
+    liveness:
+      enabled: true
+      httpGet:
+        path: /actuator/health/liveness
+        port: 8082
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 3
+      successThreshold: 1
+      failureThreshold: 3
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "1000m"
+
+  env:
+    - name: SPRING_PROFILES_ACTIVE
+      value: "production"
+    - name: SPRING_THREADS_VIRTUAL_ENABLED
+      value: "true"
+    - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+      value: "health,info,metrics,prometheus"
+    - name: SPRING_DATASOURCE_URL
+      value: "jdbc:postgresql://postgresql:5432/paymentdb"
+
+  # CRaC sidecar for checkpoint management (Disabled for native image)
+  sidecar:
+    enabled: false
+
+# Vault Service - GraalVM Native Image (Static Binary)
+vaultService:
+  enabled: true
+  name: vault-service
+  replicaCount: 2
+
+  image:
+    repository: payment-gateway/vault-service-native
+    tag: "1.0.0-static"
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 8083
+    targetPort: 8083
+
+  # GraalVM Static Native Image: Ultra-fast startup
+  probes:
+    startup:
+      enabled: true
+      httpGet:
+        path: /actuator/health/readiness
+        port: 8083
+      initialDelaySeconds: 1
+      periodSeconds: 1
+      timeoutSeconds: 2
+      successThreshold: 1
+      failureThreshold: 10 # 10s max startup time
+
+    readiness:
+      enabled: true
+      httpGet:
+        path: /actuator/health/readiness
+        port: 8083
+      initialDelaySeconds: 1
+      periodSeconds: 5
+      timeoutSeconds: 3
+      successThreshold: 1
+      failureThreshold: 3
+
+    liveness:
+      enabled: true
+      httpGet:
+        path: /actuator/health/liveness
+        port: 8083
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 3
+      successThreshold: 1
+      failureThreshold: 3
+
+  # Minimal resources for static binary
+  resources:
+    requests:
+      memory: "128Mi" # Static binary is very efficient
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "500m"
+
+  env:
+    - name: SPRING_PROFILES_ACTIVE
+      value: "production"
+    - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+      value: "health,info,metrics,prometheus"
+    - name: SPRING_DATASOURCE_URL
+      value: "jdbc:postgresql://postgresql:5432/vaultdb"
+
+  # Security context for distroless container
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65532 # nonroot user in distroless
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+
+# Merchant Service - GraalVM Native Image
+merchantService:
+  enabled: true
+  name: merchant-service
+  replicaCount: 2
+
+  image:
+    repository: payment-gateway/merchant-service-native
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 8084
+    targetPort: 8084
+
+  probes:
+    startup:
+      enabled: true
+      httpGet:
+        path: /actuator/health/readiness
+        port: 8084
+      initialDelaySeconds: 1
+      periodSeconds: 2
+      timeoutSeconds: 3
+    readiness:
+      enabled: true
+      httpGet:
+        path: /actuator/health/readiness
+        port: 8084
+      initialDelaySeconds: 1
+    liveness:
+      enabled: true
+      httpGet:
+        path: /actuator/health/liveness
+        port: 8084
+      initialDelaySeconds: 10
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "1000m"
+
+  env:
+    - name: SPRING_PROFILES_ACTIVE
+      value: "production"
+    - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+      value: "health,info,metrics,prometheus"
+
+# Notification Service - GraalVM Native Image
+notificationService:
+  enabled: true
+  name: notification-service
+  replicaCount: 2
+
+  image:
+    repository: payment-gateway/notification-service-native
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 8085
+    targetPort: 8085
+
+  probes:
+    startup:
+      enabled: true
+      httpGet:
+        path: /actuator/health/readiness
+        port: 8085
+      initialDelaySeconds: 1
+      periodSeconds: 2
+      timeoutSeconds: 3
+    readiness:
+      enabled: true
+      httpGet:
+        path: /actuator/health/readiness
+        port: 8085
+      initialDelaySeconds: 1
+    liveness:
+      enabled: true
+      httpGet:
+        path: /actuator/health/liveness
+        port: 8085
+      initialDelaySeconds: 10
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "1000m"
+
+  env:
+    - name: SPRING_PROFILES_ACTIVE
+      value: "production"
+    - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+      value: "health,info,metrics,prometheus"
+
+# Infrastructure Dependencies
+postgresql:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "16-alpine"
+  service:
+    port: 5432
+  persistence:
+    enabled: true
+    size: 10Gi
+  env:
+    - name: POSTGRES_PASSWORD
+      value: "postgres" # Use secrets in production
+
+redis:
+  enabled: true
+  image:
+    repository: redis
+    tag: "7-alpine"
+  service:
+    port: 6379
+
+kafka:
+  enabled: true
+  image:
+    repository: confluentinc/cp-kafka
+    tag: "7.6.0"
+  service:
+    port: 9092
+
+rabbitmq:
+  enabled: true
+  image:
+    repository: rabbitmq
+    tag: "3.13-management-alpine"
+  service:
+    port: 5672
+    managementPort: 15672

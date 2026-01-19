@@ -1,0 +1,95 @@
+{{- if .Values.apiGateway.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.apiGateway.name }}
+  labels:
+    app: {{ .Values.apiGateway.name }}
+    version: {{ .Values.apiGateway.image.tag }}
+    runtime: graalvm-native
+spec:
+  replicas: {{ .Values.apiGateway.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.apiGateway.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.apiGateway.name }}
+        version: {{ .Values.apiGateway.image.tag }}
+        runtime: graalvm-native
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/actuator/prometheus"
+    spec:
+      containers:
+      - name: {{ .Values.apiGateway.name }}
+        image: "{{ .Values.global.registry }}/{{ .Values.apiGateway.image.repository }}:{{ .Values.apiGateway.image.tag }}"
+        imagePullPolicy: {{ .Values.apiGateway.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        env:
+        {{- range .Values.apiGateway.env }}
+        - name: {{ .name }}
+          value: {{ .value | quote }}
+        {{- end }}
+        
+        # GraalVM Native Image: Fast startup with 1s initialDelay
+        {{- if .Values.apiGateway.probes.startup.enabled }}
+        startupProbe:
+          httpGet:
+            path: {{ .Values.apiGateway.probes.startup.httpGet.path }}
+            port: {{ .Values.apiGateway.probes.startup.httpGet.port }}
+          initialDelaySeconds: {{ .Values.apiGateway.probes.startup.initialDelaySeconds }}
+          periodSeconds: {{ .Values.apiGateway.probes.startup.periodSeconds }}
+          timeoutSeconds: {{ .Values.apiGateway.probes.startup.timeoutSeconds }}
+          successThreshold: {{ .Values.apiGateway.probes.startup.successThreshold }}
+          failureThreshold: {{ .Values.apiGateway.probes.startup.failureThreshold }}
+        {{- end }}
+        
+        {{- if .Values.apiGateway.probes.readiness.enabled }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.apiGateway.probes.readiness.httpGet.path }}
+            port: {{ .Values.apiGateway.probes.readiness.httpGet.port }}
+          initialDelaySeconds: {{ .Values.apiGateway.probes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.apiGateway.probes.readiness.periodSeconds }}
+          timeoutSeconds: {{ .Values.apiGateway.probes.readiness.timeoutSeconds }}
+          successThreshold: {{ .Values.apiGateway.probes.readiness.successThreshold }}
+          failureThreshold: {{ .Values.apiGateway.probes.readiness.failureThreshold }}
+        {{- end }}
+        
+        {{- if .Values.apiGateway.probes.liveness.enabled }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.apiGateway.probes.liveness.httpGet.path }}
+            port: {{ .Values.apiGateway.probes.liveness.httpGet.port }}
+          initialDelaySeconds: {{ .Values.apiGateway.probes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.apiGateway.probes.liveness.periodSeconds }}
+          timeoutSeconds: {{ .Values.apiGateway.probes.liveness.timeoutSeconds }}
+          successThreshold: {{ .Values.apiGateway.probes.liveness.successThreshold }}
+          failureThreshold: {{ .Values.apiGateway.probes.liveness.failureThreshold }}
+        {{- end }}
+        
+        resources:
+          {{- toYaml .Values.apiGateway.resources | nindent 10 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.apiGateway.name }}
+  labels:
+    app: {{ .Values.apiGateway.name }}
+spec:
+  type: {{ .Values.apiGateway.service.type }}
+  ports:
+  - port: {{ .Values.apiGateway.service.port }}
+    targetPort: {{ .Values.apiGateway.service.targetPort }}
+    protocol: TCP
+    name: http
+  selector:
+    app: {{ .Values.apiGateway.name }}
+{{- end }}

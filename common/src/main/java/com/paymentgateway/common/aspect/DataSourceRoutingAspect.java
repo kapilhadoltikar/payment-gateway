@@ -22,8 +22,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 public class DataSourceRoutingAspect implements Ordered {
 
-    @Around("@annotation(transactional)")
-    public Object routeBasedOnTransaction(ProceedingJoinPoint joinPoint, Transactional transactional) throws Throwable {
+    @Around("@annotation(org.springframework.transaction.annotation.Transactional) || @within(org.springframework.transaction.annotation.Transactional)")
+    public Object routeBasedOnTransaction(ProceedingJoinPoint joinPoint) throws Throwable {
+        org.aspectj.lang.reflect.MethodSignature signature = (org.aspectj.lang.reflect.MethodSignature) joinPoint
+                .getSignature();
+        Transactional transactional = signature.getMethod().getAnnotation(Transactional.class);
+        if (transactional == null) {
+            transactional = joinPoint.getTarget().getClass().getAnnotation(Transactional.class);
+        }
+
         return handleRouting(joinPoint, transactional);
     }
 
