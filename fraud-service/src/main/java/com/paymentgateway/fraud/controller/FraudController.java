@@ -1,8 +1,10 @@
 package com.paymentgateway.fraud.controller;
 
+import com.paymentgateway.common.dto.ApiResponse;
 import com.paymentgateway.fraud.dto.FraudCheckRequest;
 import com.paymentgateway.fraud.dto.FraudResult;
 import com.paymentgateway.fraud.service.FraudDetectionService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,7 +20,8 @@ public class FraudController {
     private final FraudDetectionService fraudService;
 
     @PostMapping("/check")
-    public Mono<FraudResult> checkFraud(@RequestBody FraudCheckRequest request) {
-        return fraudService.evaluateRisk(request);
+    public Mono<ApiResponse<FraudResult>> checkFraud(@Valid @RequestBody FraudCheckRequest request) {
+        return fraudService.evaluateRisk(request)
+                .map(result -> ApiResponse.success("Fraud check completed", result));
     }
 }

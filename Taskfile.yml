@@ -2,6 +2,17 @@ version: "3"
 
 vars:
   JAVA_VERSION: 25
+  MVNW: '{{if eq OS "windows"}}mvnw.cmd{{else}}./mvnw{{end}}'
+  PYTHON: '{{if eq OS "windows"}}python{{else}}python3{{end}}'
+  NATIVE_SERVICES:
+    - api-gateway
+    - auth-service
+    - vault-service
+    - merchant-service
+    - notification-service
+  JVM_SERVICES:
+    - payment-service
+    - fraud-service
   SERVICES:
     - api-gateway
     - auth-service
@@ -31,7 +42,7 @@ tasks:
     generates:
       - common/target/*.jar
     cmds:
-      - ./mvnw clean install -DskipTests -pl common -am
+      - "{{.MVNW}} clean install -DskipTests -pl common -am"
 
   build-all-services:
     internal: true
@@ -51,7 +62,7 @@ tasks:
     generates:
       - target/*.jar
     cmds:
-      - ../mvnw clean package -DskipTests -pl {{.SERVICE}}
+      - "../{{.MVNW}} clean package -DskipTests -pl {{.SERVICE}}"
 
   build:native:
     desc: Build all native images using multi-stage Docker
@@ -73,12 +84,96 @@ tasks:
     cmds:
       - docker build --build-arg SERVICE_NAME={{.SERVICE}} -f Dockerfile.native -t payment-gateway/{{.SERVICE}}:native .
 
-  test:
-    desc: Run tests for all services
+  build:hybrid:
+    desc: Build the hybrid Native/JVM stack as specified
     cmds:
-      - ./mvnw test
+      - task: build-common
+      - for:
+          var: NATIVE_SERVICES
+        task: build-native-service
+        vars: { SERVICE: "{{.ITEM}}" }
+      - for:
+          var: JVM_SERVICES
+        task: build-jvm-service
+        vars: { SERVICE: "{{.ITEM}}" }
+
+  build-jvm-service:
+    label: "jvm:{{.SERVICE}}"
+    desc: Build JVM Docker image for {{.SERVICE}}
+    cmds:
+      - task: build-service
+        vars: { SERVICE: "{{.SERVICE}}" }
+      - docker build --build-arg SERVICE_NAME={{.SERVICE}} -f Dockerfile -t payment-gateway/{{.SERVICE}}:jvm .
+
+  up:hybrid:
+    desc: Run the hybrid Native/JVM stack
+    cmds:
+      - docker-compose up -d
+
+  test:
+    desc: Run all tests (unit + E2E)
+    cmds:
+      - task: test:unit
+      - task: test:e2e
+
+  test:unit:
+    desc: Run unit tests for all services
+    cmds:
+      - "{{.MVNW}} test"
+
+  test:service:
+    desc: Run tests for a specific service (usage - task test:service SERVICE=payment-service)
+    cmds:
+      - "{{.MVNW}} test -pl {{.SERVICE}}"
+
+  test:e2e:
+    desc: Run end-to-end verification tests
+    cmds:
+      - "{{.PYTHON}} verify_payment.py"
+
+  test:coverage:
+    desc: Generate test coverage report with JaCoCo
+    cmds:
+      - "{{.MVNW}} clean verify -Pcoverage"
+      - echo "Coverage reports generated in target/site/jacoco/"
+
+  verify:
+    desc: Run full verification suite (build + test + e2e)
+    cmds:
+      - task: build
+      - task: test:unit
+      - task: test:e2e
+      - echo "✅ All verification checks passed!"
 
   clean:
     desc: Clean all build artifacts
     cmds:
-      - ./mvnw clean
+      - "{{.MVNW}} clean"
+
+  docker:up:
+    desc: Start infrastructure services (PostgreSQL, Redis, Kafka, RabbitMQ)
+    cmds:
+      - docker-compose up -d postgres redis kafka rabbitmq
+
+  docker:down:
+    desc: Stop all Docker services
+    cmds:
+      - docker-compose down
+
+  docker:logs:
+    desc: View logs from Docker services
+    cmds:
+      - docker-compose logs -f
+
+  run:all:
+    desc: Build and run all services locally
+    cmds:
+      - task: docker:up
+      - task: build
+      - echo "All services built. Start individual services with 'task run:service SERVICE=<name>'"
+
+  run:service:
+    desc: Run a specific service (usage - task run:service SERVICE=payment-service)
+    dir: "{{.SERVICE}}"
+    cmds:
+      - "../{{.MVNW}} spring-boot:run"

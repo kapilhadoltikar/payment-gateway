@@ -60,6 +60,9 @@ public class Transaction {
     @Column(name = "failure_reason")
     private String failureReason;
 
+    @Column(name = "idempotency_key", unique = true)
+    private String idempotencyKey;
+
     @CreationTimestamp
     @Column(updatable = false, name = "created_at")
     private LocalDateTime createdAt;

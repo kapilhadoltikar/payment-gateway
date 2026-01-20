@@ -1,5 +1,5 @@
 # Runtime stage
-FROM eclipse-temurin:25-jre-alpine
+FROM eclipse-temurin:25-jre
 WORKDIR /app
 
 ARG SERVICE_NAME

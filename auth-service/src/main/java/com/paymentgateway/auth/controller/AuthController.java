@@ -6,6 +6,7 @@ import com.paymentgateway.auth.dto.RegisterRequest;
 import com.paymentgateway.auth.service.AuthService;
 import com.paymentgateway.common.config.JwtUtil;
 import com.paymentgateway.common.dto.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -21,13 +22,13 @@ public class AuthController {
     private final JwtUtil jwtUtil;
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<AuthResponse>> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
         log.info("Registering user: {}", request.getUsername());
         return ResponseEntity.ok(ApiResponse.success("User registered successfully", authService.register(request)));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<AuthResponse>> login(@RequestBody AuthRequest request) {
+    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody AuthRequest request) {
         log.info("Login attempt for user: {}", request.getUsername());
         return ResponseEntity.ok(ApiResponse.success("Login successful", authService.login(request)));
     }

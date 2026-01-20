@@ -43,8 +43,20 @@ public class FraudDetectionService {
         }
 
         // 2. Feature Enrichment (Concurrent)
+        // 2. Feature Enrichment (Concurrent)
         return fetchFeatures(request)
                 .flatMap(features -> {
+                    // 2a. Velocity Rule Check
+                    if (features[1] > 10.0) { // Limit: 10 transactions per hour
+                        log.warn("Velocity limit exceeded for user {}", request.getUserId());
+                        return Mono.just(FraudResult.builder()
+                                .transactionId(request.getTransactionId())
+                                .riskScore(0.95)
+                                .decision(FraudResult.FraudDecision.BLOCK)
+                                .riskFactors(List.of("Velocity Limit Exceeded (>10/hr)"))
+                                .build());
+                    }
+
                     // 3. AI Inference
                     try (var scope = StructuredTaskScope.open()) {
                         var inferenceTask = scope.fork(() -> runInference(features));

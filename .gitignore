@@ -4,7 +4,6 @@ target/
 *.jar
 *.war
 *.ear
-*.zip
 
 # Log files
 *.log
@@ -34,6 +33,13 @@ coverage/
 mvnw
 mvnw.cmd
 
-# graalvm
-graalvm.zip
+# Docekr
+DOCKER_BUILD_GUIDE.md
 
+# Graalvm
+graalvm*.zip
+
+HYBRID_RUNTIME_STRATEGY.md
+PROJECT_GUIDE.md
+resume_content.md
+RESUME_PROJECT_DESCRIPTION.md

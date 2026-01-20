@@ -40,4 +40,6 @@ public class PaymentRequest {
     private String customerEmail;
 
     private String description;
+
+    private String idempotencyKey;
 }

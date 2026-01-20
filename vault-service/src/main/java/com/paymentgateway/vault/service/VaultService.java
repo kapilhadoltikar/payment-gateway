@@ -1,11 +1,13 @@
 package com.paymentgateway.vault.service;
 
+import com.paymentgateway.common.exception.BusinessException;
 import com.paymentgateway.common.security.EncryptionService;
 import com.paymentgateway.common.dto.vault.CardDataResponse;
 import com.paymentgateway.common.dto.vault.TokenizeRequest;
 import com.paymentgateway.common.dto.vault.TokenizeResponse;
 import com.paymentgateway.vault.entity.CardData;
 import com.paymentgateway.vault.repository.CardDataRepository;
+import com.paymentgateway.vault.validator.CardValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +19,9 @@ public class VaultService {
         private final EncryptionService encryptionService;
 
         public TokenizeResponse tokenize(TokenizeRequest request) {
+                // Validate card data before tokenization
+                CardValidator.validateCard(request.getPan(), request.getExpiryDate());
+
                 String encryptedPan = encryptionService.encrypt(request.getPan());
 
                 CardData cardData = CardData.builder()
@@ -35,7 +40,7 @@ public class VaultService {
 
         public CardDataResponse detokenize(String token) {
                 CardData cardData = cardDataRepository.findById(token)
-                                .orElseThrow(() -> new RuntimeException("Token not found"));
+                                .orElseThrow(() -> new BusinessException("Token not found", "NOT_FOUND", 404));
 
                 String pan = encryptionService.decrypt(cardData.getEncryptedPan());
 

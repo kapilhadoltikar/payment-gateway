@@ -127,14 +127,14 @@ cd vault-service
 mvn clean package -Pnative -DskipTests
 ```
 
-### Using the Build Script
+### Using Task (Recommended)
 
-```powershell
-# After GraalVM installation
-.\scripts\build-native.ps1
+```bash
+# Build all native images
+task build:native
 
-# Or build specific service
-.\scripts\build-native.ps1 -Service api-gateway
+# Build individual service
+task build-native-service SERVICE=api-gateway
 ```
 
 ## Expected Results
@@ -207,7 +207,7 @@ java -jar payment-service/target/payment-service-1.0.0-SNAPSHOT.jar
 1. ✅ Install GraalVM 25+
 2. ✅ Install native-image component
 3. ✅ Install Visual Studio Build Tools (Windows)
-4. ✅ Run `.\scripts\build-native.ps1`
+4. ✅ Run `task build:native`
 5. ✅ Deploy with Helm: `helm install payment-gateway ./helm/payment-gateway`
 
 ## Resources

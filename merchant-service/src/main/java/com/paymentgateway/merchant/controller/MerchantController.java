@@ -4,6 +4,7 @@ import com.paymentgateway.common.dto.ApiResponse;
 import com.paymentgateway.common.dto.merchant.MerchantRequest;
 import com.paymentgateway.common.dto.merchant.MerchantResponse;
 import com.paymentgateway.merchant.service.MerchantService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +19,7 @@ public class MerchantController {
     private final MerchantService merchantService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<MerchantResponse>> createMerchant(@RequestBody MerchantRequest request) {
+    public ResponseEntity<ApiResponse<MerchantResponse>> createMerchant(@Valid @RequestBody MerchantRequest request) {
         log.info("Creating merchant: {}", request.getName());
         return ResponseEntity
                 .ok(ApiResponse.success("Merchant created successfully", merchantService.createMerchant(request)));

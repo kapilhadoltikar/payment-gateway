@@ -14,4 +14,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, String
     List<Transaction> findByStatus(Transaction.TransactionStatus status);
 
     List<Transaction> findByMerchantIdAndStatus(String merchantId, Transaction.TransactionStatus status);
+
+    java.util.Optional<Transaction> findByIdempotencyKey(String idempotencyKey);
 }

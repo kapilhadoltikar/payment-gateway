@@ -7,7 +7,6 @@ import com.paymentgateway.payment.service.PaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,27 +27,15 @@ public class PaymentController {
     public ResponseEntity<ApiResponse<Transaction>> processPayment(
             @Valid @RequestBody PaymentRequest request) {
         log.info("Received payment request for merchant: {}", request.getMerchantId());
-
-        try {
-            Transaction transaction = paymentService.processPayment(request);
-            return ResponseEntity.ok(ApiResponse.success("Payment processed successfully", transaction));
-        } catch (Exception e) {
-            log.error("Payment processing failed", e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error(e.getMessage(), "PAYMENT_ERROR"));
-        }
+        Transaction transaction = paymentService.processPayment(request);
+        return ResponseEntity.ok(ApiResponse.success("Payment processed successfully", transaction));
     }
 
     @GetMapping("/{transactionId}")
     public ResponseEntity<ApiResponse<Transaction>> getTransaction(
             @PathVariable("transactionId") String transactionId) {
-        try {
-            Transaction transaction = paymentService.getTransaction(transactionId);
-            return ResponseEntity.ok(ApiResponse.success(transaction));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error(e.getMessage(), "NOT_FOUND"));
-        }
+        Transaction transaction = paymentService.getTransaction(transactionId);
+        return ResponseEntity.ok(ApiResponse.success(transaction));
     }
 
     @GetMapping("/merchant/{merchantId}")
@@ -61,12 +48,7 @@ public class PaymentController {
     @PostMapping("/{transactionId}/capture")
     public ResponseEntity<ApiResponse<Transaction>> capturePayment(
             @PathVariable("transactionId") String transactionId) {
-        try {
-            Transaction transaction = paymentService.capturePayment(transactionId);
-            return ResponseEntity.ok(ApiResponse.success("Payment captured successfully", transaction));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error(e.getMessage(), "CAPTURE_ERROR"));
-        }
+        Transaction transaction = paymentService.capturePayment(transactionId);
+        return ResponseEntity.ok(ApiResponse.success("Payment captured successfully", transaction));
     }
 }

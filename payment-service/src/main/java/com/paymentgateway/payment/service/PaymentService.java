@@ -1,5 +1,7 @@
 package com.paymentgateway.payment.service;
 
+import com.paymentgateway.common.exception.BusinessException;
+import com.paymentgateway.common.exception.ValidationException;
 import com.paymentgateway.common.dto.vault.TokenizeRequest;
 import com.paymentgateway.common.dto.vault.TokenizeResponse;
 import com.paymentgateway.common.model.Transaction;
@@ -32,15 +34,27 @@ public class PaymentService {
     public Transaction processPayment(PaymentRequest request) {
         log.info("Processing payment for merchant: {}", request.getMerchantId());
 
-        // 1. Validate Merchant
+        // 0. Idempotency Check
+        if (request.getIdempotencyKey() != null) {
+            var existingTx = transactionRepository.findByIdempotencyKey(request.getIdempotencyKey());
+            if (existingTx.isPresent()) {
+                log.info("Idempotency hit for key: {}", request.getIdempotencyKey());
+                return existingTx.get();
+            }
+        }
+
+        // 1. Validation
+        validateRequest(request);
+
+        // 2. Validate Merchant (Circuit Breaker pattern - simplified)
         try {
             merchantClient.getMerchant(request.getMerchantId());
         } catch (Exception e) {
-            log.error("Merchant validation failed: {}", request.getMerchantId());
-            throw new RuntimeException("Invalid merchant ID provided");
+            log.error("Merchant validation failed for merchant: {}", request.getMerchantId(), e);
+            throw new BusinessException("Invalid merchant or service unavailable", "MERCHANT_NOT_FOUND", 404);
         }
 
-        // 2. Tokenize Card
+        // 3. Tokenize Card
         String cardToken = request.getCardToken();
         if (cardToken == null && request.getCardNumber() != null) {
             TokenizeRequest tokenizeRequest = TokenizeRequest.builder()
@@ -54,11 +68,11 @@ public class PaymentService {
                 cardToken = tokenizeResponse.getToken();
             } catch (Exception e) {
                 log.error("Vault tokenization failed", e);
-                throw new RuntimeException("Secure tokenization failed: " + e.getMessage());
+                throw new BusinessException("Secure tokenization failed", "VAULT_ERROR", 500);
             }
         }
 
-        // 3. Create Local Transaction record
+        // 4. Create Local Transaction record
         Transaction transaction = Transaction.builder()
                 .merchantId(request.getMerchantId())
                 .amount(request.getAmount())
@@ -68,6 +82,7 @@ public class PaymentService {
                 .cardToken(cardToken)
                 .customerEmail(request.getCustomerEmail())
                 .description(request.getDescription())
+                .idempotencyKey(request.getIdempotencyKey())
                 .build();
 
         log.info("Saving Transaction: merchantId={}, amount={}, cardToken={}",
@@ -75,7 +90,7 @@ public class PaymentService {
 
         transaction = transactionRepository.save(transaction);
 
-        // 4. Fraud Detection Check
+        // 5. Fraud Detection Check
         try {
             com.paymentgateway.fraud.dto.FraudCheckRequest fraudRequest = com.paymentgateway.fraud.dto.FraudCheckRequest
                     .builder()
@@ -88,7 +103,8 @@ public class PaymentService {
 
             com.paymentgateway.fraud.dto.FraudResult fraudResult = fraudClient.checkFraud(fraudRequest);
 
-            if (fraudResult.getDecision() == com.paymentgateway.fraud.dto.FraudResult.FraudDecision.BLOCK) {
+            if (fraudResult != null
+                    && com.paymentgateway.fraud.dto.FraudResult.FraudDecision.BLOCK.equals(fraudResult.getDecision())) {
                 log.warn("Transaction blocked by Fraud Service. Risk Score: {}", fraudResult.getRiskScore());
                 transaction.setStatus(Transaction.TransactionStatus.FAILED);
                 transaction.setFailureReason("High Risk Fraud Detected");
@@ -99,19 +115,37 @@ public class PaymentService {
                     .getDecision() == com.paymentgateway.fraud.dto.FraudResult.FraudDecision.MANUAL_REVIEW) {
                 log.info("Transaction flagged for Manual Review (Gray Path). Risk Score: {}",
                         fraudResult.getRiskScore());
-                // For demo, we designate this by modifying the description or log, but proceed
-                // to auth
                 transaction.setDescription(transaction.getDescription() + " [REVIEW REQUIRED]");
             }
 
         } catch (Exception e) {
-            log.error("Fraud check failed, failing open (allowing transaction) but logging error", e);
+            log.error("Fraud check failed, failing closed", e);
+            transaction.setStatus(Transaction.TransactionStatus.FAILED);
+            transaction.setFailureReason("Fraud Check System Error");
+            transactionRepository.save(transaction);
+            kafkaProducer.sendPaymentEvent(transaction);
+            return transaction;
         }
 
-        // 5. Process Path
+        // 6. Process Path
         Transaction modernResult = processModernPath(transaction);
 
         return modernResult;
+    }
+
+    private void validateRequest(PaymentRequest request) {
+        if (request.getAmount() == null || request.getAmount().doubleValue() <= 0) {
+            throw new ValidationException("Amount must be greater than 0");
+        }
+        if (request.getCurrency() == null || request.getCurrency().length() != 3) {
+            throw new ValidationException("Invalid currency format (requires 3 letters ISO code)");
+        }
+        if ("CARD".equalsIgnoreCase(request.getPaymentMethod())) {
+            if ((request.getCardToken() == null || request.getCardToken().isBlank()) &&
+                    (request.getCardNumber() == null || request.getCardNumber().isBlank())) {
+                throw new ValidationException("Card details (number or token) are required for CARD payment");
+            }
+        }
     }
 
     private Transaction processModernPath(Transaction transaction) {
@@ -131,7 +165,7 @@ public class PaymentService {
 
     public Transaction getTransaction(String transactionId) {
         return transactionRepository.findById(transactionId)
-                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+                .orElseThrow(() -> new BusinessException("Transaction not found", "NOT_FOUND", 404));
     }
 
     public List<Transaction> getMerchantTransactions(String merchantId) {
@@ -142,7 +176,8 @@ public class PaymentService {
     public Transaction capturePayment(String transactionId) {
         Transaction transaction = getTransaction(transactionId);
         if (transaction.getStatus() != Transaction.TransactionStatus.AUTHORIZED) {
-            throw new RuntimeException("Cannot capture unauthorized transaction");
+            throw new BusinessException("Cannot capture transaction with status: " + transaction.getStatus(),
+                    "INVALID_STATUS");
         }
 
         transaction.setStatus(Transaction.TransactionStatus.CAPTURED);

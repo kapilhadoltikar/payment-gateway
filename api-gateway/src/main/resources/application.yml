@@ -7,7 +7,15 @@ spring:
   threads:
     virtual:
       enabled: true
+  autoconfigure:
+    exclude:
+      - org.springframework.cloud.autoconfigure.LifecycleMvcEndpointAutoConfiguration
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration
   cloud:
+    refresh:
+      enabled: false
     gateway:
       routes:
         # Auth Service Routes
@@ -26,6 +34,12 @@ spring:
           filters:
             - StripPrefix=2
             - JwtAuthenticationFilter
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@userKeyResolver}"
 
         # Merchant Service Routes
         - id: merchant-service
@@ -35,6 +49,12 @@ spring:
           filters:
             - StripPrefix=2
             - JwtAuthenticationFilter
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
+                redis-rate-limiter.requestedTokens: 1
+                key-resolver: "#{@userKeyResolver}"
 
         # Vault Service Routes (Internal Only - Not exposed)
         - id: vault-service

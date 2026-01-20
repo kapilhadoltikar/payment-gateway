@@ -106,10 +106,8 @@ services:
 
   # Microservices
   auth-service:
-    image: openjdk:25-ea-jdk-slim
+    image: payment-gateway/auth-service:jvm
     container_name: auth-service
-    volumes:
-      - ./auth-service/target/auth-service-1.0.0-SNAPSHOT.jar:/app/server.jar
     ports:
       - "8081:8081"
     environment:
@@ -117,37 +115,31 @@ services:
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
-    command: ["java", "--enable-preview", "-jar", "/app/server.jar"]
     depends_on:
       postgres: { condition: service_healthy }
     networks: [payment-network]
 
   payment-service:
-    image: openjdk:25-ea-jdk-slim
+    image: payment-gateway/payment-service:jvm
     container_name: payment-service
-    volumes:
-      - ./payment-service/target/payment-service-1.0.0-SNAPSHOT.jar:/app/server.jar
     ports:
       - "8082:8082"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/payment_db
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - VAULT_SERVICE_URL=http://vault-service:8084
       - MERCHANT_SERVICE_URL=http://merchant-service:8083
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
-    command: ["java", "--enable-preview", "-jar", "/app/server.jar"]
     depends_on:
       postgres: { condition: service_healthy }
       kafka: { condition: service_healthy }
     networks: [payment-network]
 
   merchant-service:
-    image: openjdk:25-ea-jdk-slim
+    image: payment-gateway/merchant-service:jvm
     container_name: merchant-service
-    volumes:
-      - ./merchant-service/target/merchant-service-1.0.0-SNAPSHOT.jar:/app/server.jar
     ports:
       - "8083:8083"
     environment:
@@ -155,16 +147,13 @@ services:
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
-    command: ["java", "--enable-preview", "-jar", "/app/server.jar"]
     depends_on:
       postgres: { condition: service_healthy }
     networks: [payment-network]
 
   vault-service:
-    image: openjdk:25-ea-jdk-slim
+    image: payment-gateway/vault-service:jvm
     container_name: vault-service
-    volumes:
-      - ./vault-service/target/vault-service-1.0.0-SNAPSHOT.jar:/app/server.jar
     ports:
       - "8084:8084"
     environment:
@@ -172,54 +161,44 @@ services:
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
-    command: ["java", "--enable-preview", "-jar", "/app/server.jar"]
     depends_on:
       postgres: { condition: service_healthy }
     networks: [payment-network]
 
   notification-service:
-    image: openjdk:25-ea-jdk-slim
+    image: payment-gateway/notification-service:jvm
     container_name: notification-service
-    volumes:
-      - ./notification-service/target/notification-service-1.0.0-SNAPSHOT.jar:/app/server.jar
     ports:
       - "8085:8085"
     environment:
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - SPRING_RABBITMQ_HOST=rabbitmq
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
-    command: ["java", "--enable-preview", "-jar", "/app/server.jar"]
     depends_on:
       kafka: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
     networks: [payment-network]
 
   fraud-service:
-    image: openjdk:25-ea-jdk-slim
+    image: payment-gateway/fraud-service:jvm
     container_name: fraud-service
-    volumes:
-      - ./fraud-service/target/fraud-service-1.0.0-SNAPSHOT.jar:/app/server.jar
     ports:
       - "8086:8086"
     environment:
       - SPRING_REDIS_HOST=redis
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
-    command: ["java", "--enable-preview", "-jar", "/app/server.jar"]
     depends_on:
       redis: { condition: service_healthy }
     networks: [payment-network]
 
   api-gateway:
-    image: openjdk:25-ea-jdk-slim
+    image: payment-gateway/api-gateway:jvm
     container_name: api-gateway
-    volumes:
-      - ./api-gateway/target/api-gateway-1.0.0-SNAPSHOT.jar:/app/server.jar
     ports:
       - "8080:8080"
     environment:
       - SPRING_REDIS_HOST=redis
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
-    command: ["java", "--enable-preview", "-jar", "/app/server.jar"]
     depends_on:
       redis: { condition: service_healthy }
     networks: [payment-network]

@@ -1,6 +1,6 @@
 # Docker Ignore
-target/
-**/target/
+# target/
+# **/target/
 .git/
 .idea/
 .vscode/

@@ -1,5 +1,6 @@
 package com.paymentgateway.auth.service;
 
+import com.paymentgateway.common.exception.BusinessException;
 import com.paymentgateway.auth.dto.AuthRequest;
 import com.paymentgateway.auth.dto.AuthResponse;
 import com.paymentgateway.auth.dto.RegisterRequest;
@@ -24,7 +25,7 @@ public class AuthService {
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new RuntimeException("Username already exists");
+            throw new BusinessException("Username already exists", "USER_EXISTS", 409);
         }
 
         User user = User.builder()
@@ -40,10 +41,10 @@ public class AuthService {
 
     public AuthResponse login(AuthRequest request) {
         User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("Invalid username or password"));
+                .orElseThrow(() -> new BusinessException("Invalid username or password", "AUTH_FAILED", 401));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid username or password");
+            throw new BusinessException("Invalid username or password", "AUTH_FAILED", 401);
         }
 
         Map<String, Object> claims = new HashMap<>();
