@@ -26,8 +26,15 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
+            String path = request.getURI().getPath();
 
-            if (!request.getHeaders().containsHeader(HttpHeaders.AUTHORIZATION)) {
+            // Whitelist Swagger/OpenAPI endpoints
+            if (path.contains("/v3/api-docs") || path.contains("/swagger-ui") || path.contains("/webjars")
+                    || path.contains("/swagger-resources")) {
+                return chain.filter(exchange);
+            }
+
+            if (request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION) == null) {
                 return onError(exchange, "No Authorization Header", HttpStatus.UNAUTHORIZED);
             }
 

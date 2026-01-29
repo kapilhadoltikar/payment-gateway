@@ -8,13 +8,14 @@ import statistics
 import sys
 from concurrent.futures import ThreadPoolExecutor
 
-# Direct Service URLs
-AUTH_URL = "http://localhost:8081/auth"
-MERCHANT_URL = "http://localhost:8083/merchants"
-PAYMENT_URL = "http://localhost:8082/payments"
+# Direct Service URLs (Bypassing Gateway for stability)
+AUTH_URL = "http://localhost:8081"
+MERCHANT_URL = "http://localhost:8083"
+PAYMENT_URL = "http://localhost:8082"
 
-CONCURRENCY = 1  # Minimal concurrency to ensure stability
-DURATION_SECONDS = 30 
+# Benchmarking Parameters
+CONCURRENCY = 10  # Number of concurrent threads
+DURATION_SECONDS = 60 # Test duration
 
 success_count = 0
 error_count = 0
@@ -42,58 +43,58 @@ def make_request(url, method="POST", data=None, headers=None):
             latency = (time.time() - start_time) * 1000 # ms
             return response.status, json.loads(body), latency
     except urllib.error.HTTPError as e:
-        print(f"HTTP Error {e.code}: {e.read().decode('utf-8')}")
+        error_msg = e.read().decode('utf-8')
+        print(f"HTTP Error {e.code}: {url} -> {error_msg}")
         return e.code, None, 0
     except Exception as e:
-        print(f"Request Error: {e}")
+        print(f"Request Error: {url} -> {e}")
         return 500, None, 0
 
 def get_auth_token():
-    user_suffix = random.randint(1000, 9999)
+    user_suffix = random.randint(10000, 99999)
     payload = {
-        "username": f"loadtest_user_{user_suffix}",
+        "username": f"bench_user_{user_suffix}",
         "password": "password123",
-        "email": f"loadtest_{user_suffix}@example.com"
+        "email": f"bench_{user_suffix}@example.com"
     }
-    status, body, _ = make_request(f"{AUTH_URL}/register", data=payload)
+    status, body, _ = make_request(f"{AUTH_URL}/auth/register", data=payload)
     if status == 200 and 'data' in body:
         return body['data']['token']
     raise Exception(f"Failed to get auth token. Status: {status}")
 
 def register_merchant(token):
-    merchant_suffix = random.randint(1000, 9999)
+    merchant_suffix = random.randint(10000, 99999)
     payload = {
-        "name": f"LoadTest Merchant {merchant_suffix}",
+        "name": f"Bench Merchant {merchant_suffix}",
         "email": f"merchant_{merchant_suffix}@test.com",
         "webhookUrl": "http://localhost:9999/webhook"
     }
     headers = {"Authorization": f"Bearer {token}"}
-    status, body, _ = make_request(MERCHANT_URL, data=payload, headers=headers)
+    status, body, _ = make_request(f"{MERCHANT_URL}/merchants", data=payload, headers=headers)
     if status == 200 and 'data' in body:
-        print(f"DEBUG: Merchant Response: {body}")
-        if 'id' in body['data']: return body['data']['id']
-        elif 'merchantId' in body['data']: return body['data']['merchantId']
-        else: return body['data'].get('id') # Fallback
+        data = body['data']
+        if 'id' in data: return data['id']
+        if 'merchantId' in data: return data['merchantId']
+        return data.get('id')
     raise Exception(f"Failed to register merchant. Status: {status}, Body: {body}")
 
 def process_payment(token, merchant_id):
     global success_count, error_count, latencies
     payload = {
         "merchantId": merchant_id,
-        "amount": random.randint(10, 500),
+        "amount": random.randint(10, 100),
         "currency": "USD",
         "paymentMethod": "CARD",
-        "cardNumber": "4111222233334444",
+        "cardNumber": "4111111111111111",
         "expiryMonth": "12",
         "expiryYear": "2030",
         "cvv": "123",
-        "cardHolderName": "Load Tester",
+        "cardHolderName": "Bench Tester",
         "customerEmail": "tester@example.com"
     }
     headers = {"Authorization": f"Bearer {token}"}
     
-    # Hit Payment Service process endpoint
-    status, _, latency = make_request(f"{PAYMENT_URL}/process", data=payload, headers=headers)
+    status, _, latency = make_request(f"{PAYMENT_URL}/payments/process", data=payload, headers=headers)
     
     with lock:
         if status == 200:
@@ -103,19 +104,18 @@ def process_payment(token, merchant_id):
             error_count += 1
 
 def run_load_test():
-    print("--- Starting Payment Gateway Load Test (Direct Service Access) ---")
+    print(f"--- Starting Payment Gateway Benchmark (Direct Service Access) ---")
+    print(f"Concurrency: {CONCURRENCY}, Duration: {DURATION_SECONDS}s")
     
     try:
-        print("1. Authenticating (Auth Service :8081)...")
+        print("1. Preparing Test Data...")
         token = get_auth_token()
-        print("   Token acquired.")
+        print("   [OK] Auth token acquired.")
         
-        print("2. Registering Merchant (Merchant Service :8083)...")
         merchant_id = register_merchant(token)
-        print(f"   Merchant ID: {merchant_id}")
+        print(f"   [OK] Merchant ID: {merchant_id}")
         
-        print(f"3. Running Load Test against Payment Service (:8082)")
-        print(f"   Concurrency: {CONCURRENCY}, Duration: {DURATION_SECONDS}s...")
+        print(f"2. Running Load Test (Hitting {PAYMENT_URL}/payments/process)...")
         
         start_time = time.time()
         end_time = start_time + DURATION_SECONDS
@@ -123,7 +123,6 @@ def run_load_test():
         with ThreadPoolExecutor(max_workers=CONCURRENCY) as executor:
             while time.time() < end_time:
                 futures = []
-                # Over-provision tasks slightly to keep threads busy
                 for _ in range(CONCURRENCY * 2):
                     if time.time() >= end_time: break
                     futures.append(executor.submit(process_payment, token, merchant_id))
@@ -133,7 +132,7 @@ def run_load_test():
                     
         total_time = time.time() - start_time
         
-        print("\n--- Results ---")
+        print("\n--- Benchmark Results ---")
         total_reqs = success_count + error_count
         rps = total_reqs / total_time
         
@@ -141,16 +140,18 @@ def run_load_test():
         print(f"Successful:     {success_count}")
         print(f"Failed:         {error_count}")
         print(f"Duration:       {total_time:.2f} seconds")
-        print(f"RPS:            {rps:.2f}")
+        print(f"Throughput:     {rps:.2f} RPS")
         
         if latencies:
             print(f"Avg Latency:    {statistics.mean(latencies):.2f} ms")
             print(f"P50 Latency:    {statistics.median(latencies):.2f} ms")
-            print(f"P95 Latency:    {statistics.quantiles(latencies, n=20)[18]:.2f} ms")
-            print(f"P99 Latency:    {statistics.quantiles(latencies, n=100)[98]:.2f} ms")
+            if len(latencies) >= 20:
+                print(f"P95 Latency:    {statistics.quantiles(latencies, n=20)[18]:.2f} ms")
+            if len(latencies) >= 100:
+                print(f"P99 Latency:    {statistics.quantiles(latencies, n=100)[98]:.2f} ms")
 
     except Exception as e:
-        print(f"Test Aborted: {e}")
+        print(f"Test Failed: {e}")
 
 if __name__ == "__main__":
     run_load_test()

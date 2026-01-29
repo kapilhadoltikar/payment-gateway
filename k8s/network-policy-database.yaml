@@ -1,0 +1,39 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: database-policy
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: [postgres, payment-db, redis]
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: auth-service
+        - podSelector:
+            matchLabels:
+              app: payment-service
+        - podSelector:
+            matchLabels:
+              app: merchant-service
+        - podSelector:
+            matchLabels:
+              app: vault-service
+        - podSelector:
+            matchLabels:
+              app: fraud-service
+        - podSelector:
+            matchLabels:
+              app: notification-service
+      ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 5434 # payment-db
+        - protocol: TCP
+          port: 6379

@@ -7,20 +7,16 @@ spring:
   threads:
     virtual:
       enabled: true
-  autoconfigure:
-    exclude:
-      - org.springframework.cloud.autoconfigure.LifecycleMvcEndpointAutoConfiguration
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
-      - org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration
   cloud:
+    discovery:
+      enabled: false
     refresh:
       enabled: false
     gateway:
       routes:
         # Auth Service Routes
         - id: auth-service
-          uri: http://auth-service:8081
+          uri: ${AUTH_SERVICE_URL:http://auth-service:8081}
           predicates:
             - Path=/api/v1/auth/**
           filters:
@@ -28,7 +24,7 @@ spring:
 
         # Payment Service Routes
         - id: payment-service
-          uri: http://payment-service:8082
+          uri: ${PAYMENT_SERVICE_URL:http://payment-service:8082}
           predicates:
             - Path=/api/v1/payments/**
           filters:
@@ -43,7 +39,7 @@ spring:
 
         # Merchant Service Routes
         - id: merchant-service
-          uri: http://merchant-service:8083
+          uri: ${MERCHANT_SERVICE_URL:http://merchant-service:8083}
           predicates:
             - Path=/api/v1/merchants/**
           filters:
@@ -54,15 +50,60 @@ spring:
                 redis-rate-limiter.replenishRate: 5
                 redis-rate-limiter.burstCapacity: 10
                 redis-rate-limiter.requestedTokens: 1
-                key-resolver: "#{@userKeyResolver}"
+                key-resolver: "#{@ipKeyResolver}"
 
         # Vault Service Routes (Internal Only - Not exposed)
         - id: vault-service
-          uri: http://vault-service:8084
+          uri: ${VAULT_SERVICE_URL:http://vault-service:8084}
           predicates:
             - Path=/api/v1/vault/**
           filters:
             - StripPrefix=2
+
+        # Fraud Service Routes
+        - id: fraud-service
+          uri: ${FRAUD_SERVICE_URL:http://fraud-service:8086}
+          predicates:
+            - Path=/api/v1/fraud/**
+          filters:
+            - StripPrefix=2
+            - JwtAuthenticationFilter
+
+        # --- OpenAPI Routes (Rewrite to /v3/api-docs) ---
+        - id: openapi-auth
+          uri: ${AUTH_SERVICE_URL:http://auth-service:8081}
+          predicates:
+            - Path=/v3/api-docs/auth-service
+          filters:
+            - RewritePath=/v3/api-docs/auth-service, /v3/api-docs
+
+        - id: openapi-payment
+          uri: ${PAYMENT_SERVICE_URL:http://payment-service:8082}
+          predicates:
+            - Path=/v3/api-docs/payment-service
+          filters:
+            - RewritePath=/v3/api-docs/payment-service, /v3/api-docs
+
+        - id: openapi-merchant
+          uri: ${MERCHANT_SERVICE_URL:http://merchant-service:8083}
+          predicates:
+            - Path=/v3/api-docs/merchant-service
+          filters:
+            - RewritePath=/v3/api-docs/merchant-service, /v3/api-docs
+
+        - id: openapi-fraud
+          uri: ${FRAUD_SERVICE_URL:http://fraud-service:8086}
+          predicates:
+            - Path=/v3/api-docs/fraud-service
+          filters:
+            - RewritePath=/v3/api-docs/fraud-service, /v3/api-docs
+
+        - id: openapi-vault
+          uri: ${VAULT_SERVICE_URL:http://vault-service:8084}
+          predicates:
+            - Path=/v3/api-docs/vault-service
+          filters:
+            - RewritePath=/v3/api-docs/vault-service, /v3/api-docs
 
       globalcors:
         corsConfigurations:
@@ -78,12 +119,12 @@ spring:
   data:
     redis:
       host: ${SPRING_REDIS_HOST:redis}
-      port: 6379
+      port: ${REDIS_PORT:6379}
 
 # JWT Configuration
 jwt:
-  secret: ThisIsAVeryLongSecretKeyForJWTTokenGenerationAndValidation12345
-  expiration: 3600000
+  secret: ${JWT_SECRET:ThisIsAVeryLongSecretKeyForJWTTokenGenerationAndValidation12345}
+  expiration: ${JWT_EXPIRATION:3600000}
 
 # Actuator
 management:
@@ -102,8 +143,28 @@ management:
     tracing:
       endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://otel-collector:4318/v1/traces}
 
+# SpringDoc Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    urls:
+      - name: Auth Service
+        url: /v3/api-docs/auth-service
+      - name: Payment Service
+        url: /v3/api-docs/payment-service
+      - name: Merchant Service
+        url: /v3/api-docs/merchant-service
+      - name: Fraud Service
+        url: /v3/api-docs/fraud-service
+      - name: Vault Service
+        url: /v3/api-docs/vault-service
+
 # Logging
 logging:
   level:
-    org.springframework.cloud.gateway: DEBUG
-    com.paymentgateway: DEBUG
+    org.springframework.cloud.gateway: INFO
+    com.paymentgateway: INFO
+    org.springdoc: INFO

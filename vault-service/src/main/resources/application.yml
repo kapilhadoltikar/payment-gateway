@@ -8,9 +8,9 @@ spring:
     virtual:
       enabled: true
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/vault_db}
-    username: postgres
-    password: postgres
+    url: ${VAULT_DATASOURCE_URL:jdbc:postgresql://postgres:5432/vault_db}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
   jpa:
     hibernate:
       ddl-auto: update
@@ -29,4 +29,4 @@ management:
 
 logging:
   level:
-    com.paymentgateway: DEBUG
+    com.paymentgateway: INFO

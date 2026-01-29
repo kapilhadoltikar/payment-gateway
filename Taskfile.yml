@@ -1,7 +1,7 @@
 version: "3"
 
 vars:
-  JAVA_VERSION: 25
+  JAVA_VERSION: 21
   MVNW: '{{if eq OS "windows"}}mvnw.cmd{{else}}./mvnw{{end}}'
   PYTHON: '{{if eq OS "windows"}}python{{else}}python3{{end}}'
   NATIVE_SERVICES:
@@ -35,7 +35,7 @@ tasks:
       - task: build-all-services
 
   build-common:
-    internal: true
+    desc: Build the common library
     sources:
       - common/src/**/*
       - common/pom.xml
@@ -55,14 +55,13 @@ tasks:
   build-service:
     label: "build:{{.SERVICE}}"
     desc: Build a specific service
-    dir: "{{.SERVICE}}"
     sources:
       - src/**/*
       - pom.xml
     generates:
       - target/*.jar
     cmds:
-      - "../{{.MVNW}} clean package -DskipTests -pl {{.SERVICE}}"
+      - "{{.MVNW}} clean package -DskipTests -pl {{.SERVICE}}"
 
   build:native:
     desc: Build all native images using multi-stage Docker
@@ -80,9 +79,9 @@ tasks:
 
   build-native-service:
     label: "native:{{.SERVICE}}"
-    desc: Build native image for {{.SERVICE}}
+    desc: Build native image for {{.SERVICE}} using Buildpacks
     cmds:
-      - docker build --build-arg SERVICE_NAME={{.SERVICE}} -f Dockerfile.native -t payment-gateway/{{.SERVICE}}:native .
+      - "{{.MVNW}} spring-boot:build-image -Pnative -pl {{.SERVICE}} -Dspring-boot.build-image.imageName=payment-gateway/{{.SERVICE}}:native"
 
   build:hybrid:
     desc: Build the hybrid Native/JVM stack as specified
@@ -99,16 +98,16 @@ tasks:
 
   build-jvm-service:
     label: "jvm:{{.SERVICE}}"
-    desc: Build JVM Docker image for {{.SERVICE}}
+    desc: Build JVM Docker image for {{.SERVICE}} using Buildpacks
     cmds:
       - task: build-service
         vars: { SERVICE: "{{.SERVICE}}" }
-      - docker build --build-arg SERVICE_NAME={{.SERVICE}} -f Dockerfile -t payment-gateway/{{.SERVICE}}:jvm .
+      - "{{.MVNW}} spring-boot:build-image -pl {{.SERVICE}} -Dspring-boot.build-image.imageName=payment-gateway/{{.SERVICE}}:jvm"
 
   up:hybrid:
     desc: Run the hybrid Native/JVM stack
     cmds:
-      - docker-compose up -d
+      - CONTROL_PLANE_TAG=native DATA_PLANE_TAG=jvm docker-compose up -d
 
   test:
     desc: Run all tests (unit + E2E)
@@ -117,9 +116,20 @@ tasks:
       - task: test:e2e
 
   test:unit:
-    desc: Run unit tests for all services
+    desc: Run unit tests only (Maven Surefire)
     cmds:
       - "{{.MVNW}} test"
+
+  test:integration:
+    desc: Run integration tests only (Maven Failsafe)
+    cmds:
+      - "{{.MVNW}} verify -DskipUnitTests"
+
+  test:smoke:
+    desc: Run Kubernetes smoke tests
+    cmds:
+      - kubectl apply -f k8s/smoke-test-job.yaml
+      - kubectl wait --for=condition=complete --timeout=120s job/smoke-test
 
   test:service:
     desc: Run tests for a specific service (usage - task test:service SERVICE=payment-service)
@@ -130,6 +140,12 @@ tasks:
     desc: Run end-to-end verification tests
     cmds:
       - "{{.PYTHON}} verify_payment.py"
+
+  test:python:
+    desc: Run Python E2E functional tests (banking test suite)
+    dir: tests-e2e
+    cmds:
+      - "{{.PYTHON}} -m pytest -v --tb=short"
 
   test:coverage:
     desc: Generate test coverage report with JaCoCo
@@ -142,6 +158,7 @@ tasks:
     cmds:
       - task: build
       - task: test:unit
+      - task: test:integration
       - task: test:e2e
       - echo "✅ All verification checks passed!"
 
@@ -151,9 +168,9 @@ tasks:
       - "{{.MVNW}} clean"
 
   docker:up:
-    desc: Start infrastructure services (PostgreSQL, Redis, Kafka, RabbitMQ)
+    desc: Start infrastructure services (PostgreSQL, Redis, Kafka, RabbitMQ, OTEL)
     cmds:
-      - docker-compose up -d postgres redis kafka rabbitmq
+      - docker-compose up -d postgres redis kafka rabbitmq otel-collector
 
   docker:down:
     desc: Stop all Docker services
@@ -164,6 +181,21 @@ tasks:
     desc: View logs from Docker services
     cmds:
       - docker-compose logs -f
+
+  docker:up:banking:
+    desc: Start banking infrastructure (payment-db, payment-mq)
+    cmds:
+      - docker-compose up -d payment-db payment-mq
+
+  db-shell:
+    desc: Open PostgreSQL shell for payment database
+    cmds:
+      - docker exec -it payment-gateway-payment-db psql -U bank_admin -d payment_db
+
+  db-shell:main:
+    desc: Open PostgreSQL shell for main database
+    cmds:
+      - docker exec -it payment-gateway-postgres psql -U postgres -d payment_db
 
   run:all:
     desc: Build and run all services locally
@@ -176,4 +208,81 @@ tasks:
     desc: Run a specific service (usage - task run:service SERVICE=payment-service)
     dir: "{{.SERVICE}}"
     cmds:
-      - "../{{.MVNW}} spring-boot:run"
+      - "{{.MVNW}} spring-boot:run"
+
+  build:docker:jvm:
+    desc: Build JVM Docker images for all services
+    cmds:
+      - task: build-common
+      - for:
+          var: SERVICES
+        task: build-jvm-service
+        vars: { SERVICE: "{{.ITEM}}" }
+
+  start:jvm:
+    desc: Start everything in JVM mode (fallback for non-GraalVM envs)
+    cmds:
+      - task: docker:up
+      - task: build:docker:jvm
+      - CONTROL_PLANE_TAG=jvm DATA_PLANE_TAG=jvm docker-compose up -d
+      - echo "✅ All services started (JVM Mode). Access API Gateway at http://localhost:8080"
+
+  start:
+    desc: Start everything (infrastructure + all services)
+    cmds:
+      - task: docker:up
+      - task: build:hybrid
+      - task: up:hybrid
+      - echo "✅ All services started. Access API Gateway at http://localhost:8080"
+
+  restart:
+    desc: Restart all services
+    cmds:
+      - task: docker:down
+      - task: start
+
+  run:local:
+    desc: Run all services locally in parallel (Monitoring logs will be mixed)
+    deps:
+      - run:local:api-gateway
+      - run:local:auth-service
+      - run:local:payment-service
+      - run:local:fraud-service
+      - run:local:merchant-service
+      - run:local:vault-service
+      - run:local:notification-service
+
+  run:local:api-gateway:
+    desc: Run API Gateway locally
+    cmds:
+      - cmd: '{{.MVNW}} spring-boot:run -pl api-gateway -Dspring-boot.run.jvmArguments="-DAUTH_SERVICE_URL=http://localhost:8081 -DPAYMENT_SERVICE_URL=http://localhost:8082 -DMERCHANT_SERVICE_URL=http://localhost:8083 -DVAULT_SERVICE_URL=http://localhost:8084 -DFRAUD_SERVICE_URL=http://localhost:8086 -DSPRING_REDIS_HOST=localhost -DOTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318/v1/traces"'
+
+  run:local:auth-service:
+    desc: Run Auth Service locally
+    cmds:
+      - cmd: '{{.MVNW}} spring-boot:run -pl auth-service -Dspring-boot.run.jvmArguments="-DSPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/payment_db -DPOSTGRES_USER=postgres -DPOSTGRES_PASSWORD=postgres -DOTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318/v1/traces"'
+
+  run:local:payment-service:
+    desc: Run Payment Service locally
+    cmds:
+      - cmd: '{{.MVNW}} spring-boot:run -pl payment-service -Dspring-boot.run.jvmArguments="-Dspring.datasource.url=jdbc:postgresql://localhost:5433/payment_db -Dspring.datasource.username=postgres -Dspring.datasource.password=postgres -Dspring.datasource.driver-class-name=org.postgresql.Driver -DSPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/payment_db -DSPRING_DATASOURCE_SECONDARY_URL=jdbc:postgresql://localhost:5433/payment_db -DPOSTGRES_USER=postgres -DPOSTGRES_PASSWORD=postgres -DSPRING_KAFKA_BOOTSTRAP_SERVERS=localhost:9092 -DVAULT_SERVICE_URL=http://localhost:8084 -DMERCHANT_SERVICE_URL=http://localhost:8083 -Dfraud.service.url=http://localhost:8086 -DOTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318/v1/traces"'
+
+  run:local:merchant-service:
+    desc: Run Merchant Service locally
+    cmds:
+      - cmd: '{{.MVNW}} spring-boot:run -pl merchant-service -Dspring-boot.run.jvmArguments="-DSPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/payment_db -DPOSTGRES_USER=postgres -DPOSTGRES_PASSWORD=postgres -DOTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318/v1/traces"'
+
+  run:local:vault-service:
+    desc: Run Vault Service locally
+    cmds:
+      - cmd: '{{.MVNW}} spring-boot:run -pl vault-service -Dspring-boot.run.jvmArguments="-DVAULT_DATASOURCE_URL=jdbc:postgresql://localhost:5433/payment_db -DPOSTGRES_USER=postgres -DPOSTGRES_PASSWORD=postgres -DOTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318/v1/traces"'
+
+  run:local:fraud-service:
+    desc: Run Fraud Service locally
+    cmds:
+      - cmd: '{{.MVNW}} spring-boot:run -pl fraud-service -Dspring-boot.run.jvmArguments="-DPOSTGRES_HOST=localhost -DPOSTGRES_PORT=5433 -DPOSTGRES_DB=payment_db -DPOSTGRES_USER=postgres -DPOSTGRES_PASSWORD=postgres -DSPRING_REDIS_HOST=localhost -DOTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318/v1/traces"'
+
+  run:local:notification-service:
+    desc: Run Notification Service locally
+    cmds:
+      - cmd: '{{.MVNW}} spring-boot:run -pl notification-service -Dspring-boot.run.jvmArguments="-DSPRING_KAFKA_BOOTSTRAP_SERVERS=localhost:9092 -DSPRING_RABBITMQ_HOST=localhost -DOTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318/v1/traces"'

@@ -1,0 +1,30 @@
+= Fraud Detection Service API Guide
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 4
+:sectlinks:
+
+[[overview]]
+== Overview
+The Fraud Detection Service provides a reactive API for real-time risk evaluation of transactions using machine learning models (ONNX/XGBoost).
+
+[[overview-http-verbs]]
+== HTTP verbs
+Standard HTTP verbs are used.
+
+|===
+| Verb | Usage
+
+| `POST` | Used to submit data for evaluation
+|===
+
+[[resources-fraud]]
+== Fraud Resources
+
+[[resources-fraud-check]]
+=== Fraud Check
+A `POST` request is used to evaluate a transaction for potential fraud.
+
+operation::check-fraud[snippets='http-request,request-fields,http-response,response-fields']

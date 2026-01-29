@@ -1,0 +1,53 @@
+= Merchant Service API Guide
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 4
+:sectlinks:
+
+[[overview]]
+== Overview
+The Merchant Service handles merchant onboarding, verification, and API key management.
+
+[[overview-http-verbs]]
+== HTTP verbs
+Standard HTTP verbs are used.
+
+|===
+| Verb | Usage
+
+| `GET` | Used to retrieve a resource
+| `POST` | Used to create a new resource
+| `PATCH` | Used to update an existing resource, including partial updates
+| `DELETE` | Used to delete an existing resource
+|===
+
+[[overview-http-status-codes]]
+== HTTP status codes
+Standard HTTP status codes are used.
+
+|===
+| Status code | Usage
+
+| `200 OK` | The request completed successfully
+| `201 Created` | A new resource has been created successfully
+| `400 Bad Request` | The request was invalid or could not be understood by the server
+| `401 Unauthorized` | Requester is not authorized to access the resource
+| `404 Not Found` | The requested resource could not be found
+|===
+
+[[resources-merchant]]
+== Merchant Resources
+
+[[resources-merchant-create]]
+=== Creating a Merchant
+A `POST` request is used to onboard a new merchant.
+
+operation::create-merchant[snippets='http-request,request-fields,http-response,response-fields']
+
+[[resources-merchant-get]]
+=== Retrieving a Merchant
+A `GET` request is used to retrieve a merchant's details by ID.
+
+operation::get-merchant[snippets='http-request,path-parameters,http-response,response-fields']

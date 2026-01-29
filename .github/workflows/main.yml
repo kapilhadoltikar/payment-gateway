@@ -1,0 +1,121 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  JAVA_VERSION: "21"
+
+jobs:
+  ci:
+    name: Continuous Integration
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up GraalVM JDK 21
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: "graalvm"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache: "maven"
+
+      - name: Build and Test with Maven
+        run: mvn clean verify -Dnative.skip=true
+
+      - name: Archive generated documentation
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-docs
+          path: "**/target/generated-docs"
+
+      - name: Run Checkstyle
+        run: mvn checkstyle:check
+        continue-on-error: true
+
+  cd:
+    name: Continuous Deployment
+    needs: ci
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        service:
+          [
+            api-gateway,
+            auth-service,
+            payment-service,
+            merchant-service,
+            vault-service,
+            notification-service,
+            fraud-service,
+          ]
+        include:
+          - service: api-gateway
+            is_native: true
+          - service: auth-service
+            is_native: true
+          - service: payment-service
+            is_native: false
+          - service: merchant-service
+            is_native: true
+          - service: vault-service
+            is_native: true
+          - service: notification-service
+            is_native: true
+          - service: fraud-service
+            is_native: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up GraalVM JDK 21
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: "graalvm"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache: "maven"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Native Image (Conditional)
+        if: matrix.is_native == true
+        run: mvn package -Pnative -pl ${{ matrix.service }} -am -DskipTests
+
+      - name: Build JVM Jar (Conditional)
+        if: matrix.is_native == false
+        run: mvn package -pl ${{ matrix.service }} -am -DskipTests
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.is_native && 'Dockerfile.native' || 'Dockerfile' }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:${{ github.sha }}
+          build-args: |
+            SERVICE_NAME=${{ matrix.service }}

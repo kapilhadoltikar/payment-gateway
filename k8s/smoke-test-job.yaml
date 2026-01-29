@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: smoke-test
+spec:
+  template:
+    spec:
+      containers:
+        - name: smoke-test
+          image: curlimages/curl
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Running Smoke Tests..."
+
+              # 1. API Gateway Health
+              curl -f http://api-gateway:8080/actuator/health || exit 1
+              echo "✅ API Gateway Healthy"
+
+              # 2. Auth Service Health
+              curl -f http://auth-service:8081/actuator/health || exit 1
+              echo "✅ Auth Service Healthy"
+
+              # 3. Payment Service Health
+              curl -f http://payment-service:8082/actuator/health || exit 1
+              echo "✅ Payment Service Healthy"
+
+              # 4. Vault Service Health
+              curl -f http://vault-service:8083/actuator/health || exit 1
+              echo "✅ Vault Service Healthy"
+
+              # 5. Merchant Service Health
+              curl -f http://merchant-service:8084/actuator/health || exit 1
+              echo "✅ Merchant Service Healthy"
+
+              # 6. Fraud Service Health
+              curl -f http://fraud-service:8086/actuator/health || exit 1
+              echo "✅ Fraud Service Healthy"
+
+              # 7. Notification Service Health
+              curl -f http://notification-service:8085/actuator/health || exit 1
+              echo "✅ Notification Service Healthy"
+
+              echo "🎉 All Smoke Tests Passed!"
+      restartPolicy: Never
+  backoffLimit: 2

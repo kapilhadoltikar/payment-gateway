@@ -20,7 +20,8 @@ import java.util.Map;
 @Component
 public class JwtUtil {
 
-    private String secret = "ThisIsAVeryLongSecretKeyForJWTTokenGenerationAndValidation12345";
+    @Value("${jwt.secret:ThisIsAVeryLongSecretKeyForJWTTokenGenerationAndValidation12345}")
+    private String secret;
 
     @Value("${jwt.expiration:3600000}") // 1 hour default
     private Long expiration;
@@ -83,6 +84,13 @@ public class JwtUtil {
      * Check if token is expired
      */
     public boolean isTokenExpired(String token) {
-        return extractAllClaims(token).getExpiration().before(new Date());
+        try {
+            return extractAllClaims(token).getExpiration().before(new Date());
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            return true;
+        } catch (Exception e) {
+            log.error("Error checking token expiration: {}", e.getMessage());
+            return true; // Treat other errors as expired/invalid
+        }
     }
 }

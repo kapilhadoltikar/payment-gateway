@@ -1,0 +1,92 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: backend-services-policy
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          [
+            auth-service,
+            payment-service,
+            merchant-service,
+            vault-service,
+            fraud-service,
+            notification-service,
+          ]
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api-gateway
+        - podSelector:
+            matchLabels:
+              app: payment-service # Inter-service communication
+      ports:
+        - protocol: TCP
+          port: 8081
+        - protocol: TCP
+          port: 8082
+        - protocol: TCP
+          port: 8083
+        - protocol: TCP
+          port: 8084
+        - protocol: TCP
+          port: 8085
+        - protocol: TCP
+          port: 8086
+  egress:
+    - to:
+        # Database
+        - podSelector:
+            matchLabels:
+              app: postgres
+        - podSelector:
+            matchLabels:
+              app: payment-db
+        # Messaging
+        - podSelector:
+            matchLabels:
+              app: kafka
+        - podSelector:
+            matchLabels:
+              app: rabbitmq
+        # Redis
+        - podSelector:
+            matchLabels:
+              app: redis
+        # Allow inter-service calls (e.g. Payment -> Fraud)
+        - podSelector:
+            matchLabels:
+              app: auth-service
+        - podSelector:
+            matchLabels:
+              app: payment-service
+        - podSelector:
+            matchLabels:
+              app: merchant-service
+        - podSelector:
+            matchLabels:
+              app: vault-service
+        - podSelector:
+            matchLabels:
+              app: fraud-service
+        - podSelector:
+            matchLabels:
+              app: notification-service
+        # Zipkin/Otel
+        - podSelector:
+            matchLabels:
+              app: tempo
+
+        # Allow DNS
+        - ports:
+            - protocol: UDP
+              port: 53
+            - protocol: TCP
+              port: 53

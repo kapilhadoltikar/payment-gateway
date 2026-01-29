@@ -18,9 +18,9 @@ spring:
         spring.json.value.default.type: com.paymentgateway.common.model.Transaction
   rabbitmq:
     host: ${SPRING_RABBITMQ_HOST:rabbitmq}
-    port: 5672
-    username: guest
-    password: guest
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
 
 management:
   endpoints:
@@ -36,4 +36,4 @@ management:
 
 logging:
   level:
-    com.paymentgateway: DEBUG
+    com.paymentgateway: INFO

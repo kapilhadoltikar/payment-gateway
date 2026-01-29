@@ -11,14 +11,14 @@ spring:
     # Primary (Write)
     primary:
       jdbc-url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/payment_db}
-      username: postgres
-      password: postgres
+      username: ${POSTGRES_USER:postgres}
+      password: ${POSTGRES_PASSWORD:postgres}
       driver-class-name: org.postgresql.Driver
     # Secondary (Read)
     secondary:
       jdbc-url: ${SPRING_DATASOURCE_SECONDARY_URL:jdbc:postgresql://postgres-replica:5432/payment_db}
-      username: postgres
-      password: postgres
+      username: ${POSTGRES_USER:postgres}
+      password: ${POSTGRES_PASSWORD:postgres}
       driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -42,8 +42,8 @@ spring:
         spring.json.trusted.packages: "*"
 # JWT Configuration
 jwt:
-  secret: ThisIsAVeryLongSecretKeyForJWTTokenGenerationAndValidation12345
-  expiration: 3600000
+  secret: ${JWT_SECRET:ThisIsAVeryLongSecretKeyForJWTTokenGenerationAndValidation12345}
+  expiration: ${JWT_EXPIRATION:3600000}
 
 # Payment Configuration
 payment:
@@ -55,7 +55,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
   metrics:
     export:
       prometheus:
@@ -77,5 +80,4 @@ services:
 # Logging
 logging:
   level:
-    com.paymentgateway: DEBUG
-    org.hibernate.SQL: DEBUG
+    com.paymentgateway: INFO

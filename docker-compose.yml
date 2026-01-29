@@ -1,6 +1,44 @@
 version: "3.8"
 
 services:
+  # Banking Infrastructure - Dedicated Payment Database
+  payment-db:
+    image: postgres:16-alpine
+    container_name: payment-gateway-payment-db
+    environment:
+      POSTGRES_USER: bank_admin
+      POSTGRES_PASSWORD: secure_password
+      POSTGRES_DB: payment_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - payment_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bank_admin -d payment_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - payment-network
+
+  # Banking Infrastructure - Message Queue for Async Payment Processing
+  payment-mq:
+    image: rabbitmq:3-management-alpine
+    container_name: payment-gateway-payment-mq
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: payment_user
+      RABBITMQ_DEFAULT_PASS: payment_pass
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    networks:
+      - payment-network
+
   # Infrastructure
   postgres:
     image: postgres:16-alpine
@@ -81,6 +119,9 @@ services:
     image: otel/opentelemetry-collector-contrib:0.104.0
     container_name: payment-gateway-otel-collector
     command: ["--config=/etc/otel-collector-config.yml"]
+    ports:
+      - "4317:4317"
+      - "4318:4318"
     volumes:
       - ./monitoring/otel-collector-config.yml:/etc/otel-collector-config.yml
     networks:
@@ -106,99 +147,82 @@ services:
 
   # Microservices
   auth-service:
-    image: payment-gateway/auth-service:jvm
+    image: payment-gateway/auth-service:${CONTROL_PLANE_TAG:-jvm}
     container_name: auth-service
     ports:
       - "8081:8081"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/payment_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
+    env_file:
+      - .env
     depends_on:
       postgres: { condition: service_healthy }
     networks: [payment-network]
 
   payment-service:
-    image: payment-gateway/payment-service:jvm
+    image: payment-gateway/payment-service:${DATA_PLANE_TAG:-jvm}
     container_name: payment-service
     ports:
       - "8082:8082"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/payment_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
-      - VAULT_SERVICE_URL=http://vault-service:8084
-      - MERCHANT_SERVICE_URL=http://merchant-service:8083
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
+    env_file:
+      - .env
     depends_on:
+      payment-db: { condition: service_healthy }
+      payment-mq: { condition: service_healthy }
       postgres: { condition: service_healthy }
       kafka: { condition: service_healthy }
     networks: [payment-network]
 
   merchant-service:
-    image: payment-gateway/merchant-service:jvm
+    image: payment-gateway/merchant-service:${CONTROL_PLANE_TAG:-jvm}
     container_name: merchant-service
     ports:
       - "8083:8083"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/payment_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
+    env_file:
+      - .env
     depends_on:
       postgres: { condition: service_healthy }
     networks: [payment-network]
 
   vault-service:
-    image: payment-gateway/vault-service:jvm
+    image: payment-gateway/vault-service:${CONTROL_PLANE_TAG:-jvm}
     container_name: vault-service
     ports:
       - "8084:8084"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/payment_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
+    env_file:
+      - .env
     depends_on:
       postgres: { condition: service_healthy }
     networks: [payment-network]
 
   notification-service:
-    image: payment-gateway/notification-service:jvm
+    image: payment-gateway/notification-service:${CONTROL_PLANE_TAG:-jvm}
     container_name: notification-service
     ports:
       - "8085:8085"
-    environment:
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
-      - SPRING_RABBITMQ_HOST=rabbitmq
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
+    env_file:
+      - .env
     depends_on:
       kafka: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
     networks: [payment-network]
 
   fraud-service:
-    image: payment-gateway/fraud-service:jvm
+    image: payment-gateway/fraud-service:${DATA_PLANE_TAG:-jvm}
     container_name: fraud-service
     ports:
       - "8086:8086"
-    environment:
-      - SPRING_REDIS_HOST=redis
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
+    env_file:
+      - .env
     depends_on:
       redis: { condition: service_healthy }
     networks: [payment-network]
 
   api-gateway:
-    image: payment-gateway/api-gateway:jvm
+    image: payment-gateway/api-gateway:${CONTROL_PLANE_TAG:-jvm}
     container_name: api-gateway
     ports:
       - "8080:8080"
-    environment:
-      - SPRING_REDIS_HOST=redis
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
+    env_file:
+      - .env
     depends_on:
       redis: { condition: service_healthy }
     networks: [payment-network]
@@ -209,3 +233,4 @@ networks:
 
 volumes:
   postgres_data:
+  payment_db_data:

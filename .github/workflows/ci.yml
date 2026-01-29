@@ -1,0 +1,44 @@
+name: Payment Gateway CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "oracle"
+          cache: "maven"
+
+      - name: Import Secrets from Vault
+        uses: hashicorp/vault-action@v3
+        with:
+          url: ${{ secrets.VAULT_ADDR }}
+          token: ${{ secrets.VAULT_TOKEN }}
+          secrets: |
+            secret/data/payment-gateway/prod *
+
+      - name: Build with Maven (Memory Optimized)
+        env:
+          MAVEN_OPTS: "-Xmx5g"
+        run: mvn clean install -DskipTests
+
+      - name: Build Native Image (Validation)
+        env:
+          MAVEN_OPTS: "-Xmx5g"
+        run: |
+          mvn -Pnative native:compile \
+          -pl api-gateway \
+          -Dnative-image.buildArgs="-J-Xmx5g --parallelism=2"

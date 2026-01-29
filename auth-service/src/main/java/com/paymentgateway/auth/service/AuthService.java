@@ -31,6 +31,7 @@ public class AuthService {
         User user = User.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
+                .email(request.getEmail())
                 .roles(request.getRoles() == null ? Set.of("MERCHANT") : request.getRoles())
                 .build();
 
