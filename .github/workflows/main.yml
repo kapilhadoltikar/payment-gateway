@@ -32,7 +32,9 @@ jobs:
           cache: "maven"
 
       - name: Build and Test with Maven
-        run: mvn clean verify -Dnative.skip=true
+        env:
+          MAVEN_OPTS: "-Xmx6g"
+        run: mvn clean verify -Dnative.skip=true -U
 
       - name: Archive generated documentation
         uses: actions/upload-artifact@v4
@@ -102,7 +104,7 @@ jobs:
 
       - name: Build Native Image (Conditional)
         if: matrix.is_native == true
-        run: mvn package -Pnative -pl ${{ matrix.service }} -am -DskipTests
+        run: mvn package -Pnative -pl ${{ matrix.service }} -am -DskipTests -Dnative-image.buildArgs="-J-Xmx6g --parallelism=2"
 
       - name: Build JVM Jar (Conditional)
         if: matrix.is_native == false

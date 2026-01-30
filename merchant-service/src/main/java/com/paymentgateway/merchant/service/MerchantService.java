@@ -38,7 +38,7 @@ public class MerchantService {
                 .status(Merchant.MerchantStatus.ACTIVE)
                 .build();
 
-        Merchant saved = merchantRepository.save(merchant);
+        Merchant saved = ValidationUtils.requireNonNull(merchantRepository.save(merchant), "Merchant");
 
         // Return response with plain API key (show only once!)
         MerchantResponse response = mapToResponse(saved);
@@ -47,9 +47,7 @@ public class MerchantService {
     }
 
     public MerchantResponse getMerchant(String id) {
-        ValidationUtils.requireNonEmpty(id, "Merchant ID");
-
-        Merchant merchant = merchantRepository.findById(id)
+        Merchant merchant = merchantRepository.findById(ValidationUtils.requireNonEmpty(id, "Merchant ID"))
                 .orElseThrow(() -> new BusinessException("Merchant not found", "MERCHANT_NOT_FOUND", 404));
 
         MerchantResponse response = mapToResponse(merchant);
@@ -61,7 +59,7 @@ public class MerchantService {
      * Validate API key - for authentication purposes
      */
     public boolean validateMerchantApiKey(String merchantId, String providedApiKey) {
-        Merchant merchant = merchantRepository.findById(merchantId)
+        Merchant merchant = merchantRepository.findById(ValidationUtils.requireNonEmpty(merchantId, "Merchant ID"))
                 .orElseThrow(() -> new BusinessException("Merchant not found", "MERCHANT_NOT_FOUND", 404));
 
         if (merchant.getStatus() != Merchant.MerchantStatus.ACTIVE) {

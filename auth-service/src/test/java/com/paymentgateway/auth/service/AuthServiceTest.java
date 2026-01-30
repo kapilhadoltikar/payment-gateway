@@ -38,6 +38,7 @@ class AuthServiceTest {
     private AuthService authService;
 
     @Test
+    @SuppressWarnings("null")
     void register_Success() {
         // Arrange
         RegisterRequest request = new RegisterRequest("user", "pass", "user@test.com", Set.of("USER"));

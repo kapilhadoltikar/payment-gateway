@@ -207,6 +207,7 @@ The project uses **Task** for streamlined, platform-agnostic development workflo
 100: - **Port Conflicts**: Defaults matter. `fraud-service` must run on **8086** to match `payment-service` client config.
 101: 
 102: ---
+103: 102: ---
 103: 
 104: ## 7. Performance Baselines
 105: 
@@ -221,4 +222,5 @@ The project uses **Task** for streamlined, platform-agnostic development workflo
 114: *Baselines established Jan 2026 via `load_test.py`.*
 115: 
 116: ---
-
+117: *Proprietary - Detailed Project Documentation*
+118: 104: 

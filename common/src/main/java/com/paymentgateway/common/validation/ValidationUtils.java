@@ -20,21 +20,23 @@ public class ValidationUtils {
     }
 
     /**
-     * Validate that a string is not null or empty
+     * Validate that a string is not null or empty and return it
      */
-    public static void requireNonEmpty(String value, String fieldName) {
+    public static String requireNonEmpty(String value, String fieldName) {
         if (value == null || value.trim().isEmpty()) {
             throw new ValidationException(fieldName + " cannot be empty");
         }
+        return value;
     }
 
     /**
      * Validate that a value is not null
      */
-    public static <T> void requireNonNull(T value, String fieldName) {
+    public static <T> T requireNonNull(T value, String fieldName) {
         if (value == null) {
             throw new ValidationException(fieldName + " cannot be null");
         }
+        return value;
     }
 
     /**

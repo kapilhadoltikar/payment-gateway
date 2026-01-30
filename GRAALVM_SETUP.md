@@ -2,8 +2,8 @@
 
 ## Current Status
 
-✅ **Standard JAR Build**: All services built successfully with OpenJDK Temurin 21 
-❌ **Native Image Build**: Requires GraalVM 21+ installation
+✅ **Standard JAR Build**: All services built successfully with OpenJDK Temurin 25  
+❌ **Native Image Build**: Requires GraalVM 25+ installation
 
 ## Why GraalVM?
 
@@ -65,8 +65,10 @@ gu install native-image
    gu install native-image
    ```
 
-5. **Install Build Tools** (Required for Windows):
-   - install standalone Build Tools: https://aka.ms/vs/17/release/vs_BuildTools.exe
+5. **Install Visual Studio Build Tools** (Required for Windows):
+   - Download: https://visualstudio.microsoft.com/downloads/
+   - Install "Desktop development with C++" workload
+   - Or install standalone Build Tools: https://aka.ms/vs/17/release/vs_BuildTools.exe
 
 6. **Verify Installation**:
    ```powershell
@@ -202,9 +204,9 @@ java -jar payment-service/target/payment-service-1.0.0-SNAPSHOT.jar
 
 ## Next Steps
 
-1. ✅ Install GraalVM 21+
+1. ✅ Install GraalVM 25+
 2. ✅ Install native-image component
-3. ✅ Build native images with Maven or Task
+3. ✅ Install Visual Studio Build Tools (Windows)
 4. ✅ Run `task build:native`
 5. ✅ Deploy with Helm: `helm install payment-gateway ./helm/payment-gateway`
 

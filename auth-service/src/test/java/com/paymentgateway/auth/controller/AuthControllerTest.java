@@ -40,6 +40,7 @@ public class AuthControllerTest {
     private ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
+    @SuppressWarnings("null")
     public void register_ReturnsSuccess() throws Exception {
         RegisterRequest request = new RegisterRequest("testuser", "password123", "test@test.com", Set.of("USER"));
         AuthResponse response = new AuthResponse("jwt-token", "testuser");
@@ -57,6 +58,7 @@ public class AuthControllerTest {
     }
 
     @Test
+    @SuppressWarnings("null")
     public void login_ReturnsSuccess() throws Exception {
         AuthRequest request = new AuthRequest("testuser", "password123");
         AuthResponse response = new AuthResponse("jwt-token", "testuser");

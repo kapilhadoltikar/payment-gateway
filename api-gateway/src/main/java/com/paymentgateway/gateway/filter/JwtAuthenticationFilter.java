@@ -44,6 +44,15 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             }
 
             String token = authHeader.substring(7);
+
+            // Recruiter Demo Bypass
+            if ("RECRUITER_DEMO_2026".equals(token)) {
+                ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
+                        .header("X-Auth-User", "recruiter-demo")
+                        .build();
+                return chain.filter(exchange.mutate().request(modifiedRequest).build());
+            }
+
             try {
                 if (!jwtUtil.validateToken(token)) {
                     return onError(exchange, "Invalid Token", HttpStatus.UNAUTHORIZED);

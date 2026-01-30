@@ -14,6 +14,23 @@ This system addresses critical challenges in the financial sector: **Compliance*
 -   **🧠 AI-Powered Risk Management (Champion-Challenger)**: A production-grade **Dual Inference Engine** running Logistic Regression (Champion) and XGBoost (Challenger) in parallel. Ensures 0-risk validation of new models while maintaining **<1ms decision latency**.
 -   **👁️ Full-Stack Observability**: End-to-end distributed tracing via **OpenTelemetry** and **Tempo** provides complete audit trails for every transaction, satisfying strict regulatory requirements (PSD2/GDPR).
 
+---
+
+## 👨‍💻 Recruiter & Developer Demo: Quickest way to Test
+
+If you want to see the system in action without reading the full docs, follow these 3 steps:
+
+1.  **Launch the Stack**: `task start` (Wait ~60s for all 7 services to stabilize).
+2.  **Access Swagger**: Open the [API Gateway UI (Port 8080)](http://localhost:8080/swagger-ui.html).
+3.  **Run a Test Case**: 
+    - Click **Authorize** (Value: `Bearer RECRUITER_DEMO_2026`)
+    - Go to `POST /payments/process`
+    - Execute with `amount: 150.0` (Expect: **AUTHORIZED**)
+    - Execute with `amount: 250.0` (Expect: **FAILED** - Triggered by Fraud Service AI)
+
+> [!TIP]
+> **New to Swagger?** Check out our [Detailed Swagger Testing Guide](SWAGGER_TEST_GUIDE.md) for step-by-step instructions on authentication and advanced payment scenarios.
+
 ## 🕹️ Quick Start
 
 ### Prerequisites
@@ -64,8 +81,8 @@ task restart        # Restart all services
 
 📖 **For Banking Teams**: See [BANKING_SETUP.md](BANKING_SETUP.md) for complete compliance guide, CI/CD integration, and audit procedures.
 
-### Option 2: Standard Workflow (Taskfile)
-For non-banking development workflows:
+### Option 2: Hybrid Scaling Workflow
+For teams focusing on infrastructure cost-optimization:
 
 1.  **Setup Environment**:
     ```powershell
@@ -104,8 +121,9 @@ If you don't have `task` installed:
 
 **Access Points**:
 -   **Swagger UI**: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html) (Token: `RECRUITER_DEMO_2026`)
--   **Grafana**: [http://localhost:3000](http://localhost:3000)
--   **Jaeger/Tempo**: [http://localhost:16686](http://localhost:16686)
+-   **Grafana Dashboards**: [http://localhost:3000](http://localhost:3000) (Login: `admin/admin`)
+-   **Distributed Tracing (Tempo)**: [http://localhost:16686](http://localhost:16686)
+-   **Metrics (Prometheus)**: [http://localhost:9090](http://localhost:9090)
 
 ---
 

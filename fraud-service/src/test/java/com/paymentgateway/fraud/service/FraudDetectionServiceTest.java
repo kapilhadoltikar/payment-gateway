@@ -29,8 +29,7 @@ public class FraudDetectionServiceTest {
         @InjectMocks
         private FraudDetectionService fraudDetectionService;
 
-        @Mock
-        private ai.onnxruntime.OrtEnvironment env;
+        private ai.onnxruntime.OrtEnvironment env = ai.onnxruntime.OrtEnvironment.getEnvironment();
 
         @Mock
         private ai.onnxruntime.OrtSession championSession;

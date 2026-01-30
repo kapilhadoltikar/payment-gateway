@@ -18,7 +18,7 @@ We have created 5 professional diagrams (image generation quota reached):
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         PAYMENT PROCESSING FLOW                             │
+│                         PAYMENT PROCESSING FLOW                              │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 CLIENT
@@ -82,15 +82,15 @@ INFRASTRUCTURE USED:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                              CLIENT LAYER                                   │
+│                              CLIENT LAYER                                    │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │     Web App          Mobile App          API Clients (Third-Party)          │
 └──────────────────────────────┬──────────────────────────────────────────────┘
                                │
-┌──────────────────────────────▼─────────────────────────────────────────────┐
-│                            SERVICE LAYER                                   │
-├────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
+┌──────────────────────────────▼──────────────────────────────────────────────┐
+│                            SERVICE LAYER                                     │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
 │  ┌─────────────────────────────────┐  ┌──────────────────────────────────┐ │
 │  │  CONTROL PLANE (GraalVM Native) │  │    DATA PLANE (JVM Runtime)      │ │
 │  ├─────────────────────────────────┤  ├──────────────────────────────────┤ │
@@ -111,33 +111,33 @@ INFRASTRUCTURE USED:
 │  │    Webhooks, Email, SMS         │                                       │
 │  │                                 │                                       │
 │  └─────────────────────────────────┘                                       │
-│                                                                            │
-│    Startup: ~50ms                                                          │
-│    Memory: ~50MB each                                                      │
-│    Use: Request routing, simple ops                                        │
-│                                                                            │
-└──────────────────────────────┬─────────────────────────────────────────────┘
+│                                                                              │
+│    Startup: ~50ms                                                            │
+│    Memory: ~50MB each                                                        │
+│    Use: Request routing, simple ops                                          │
+│                                                                              │
+└──────────────────────────────┬──────────────────────────────────────────────┘
                                │
 ┌──────────────────────────────▼──────────────────────────────────────────────┐
-│                         INFRASTRUCTURE LAYER                                │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
+│                         INFRASTRUCTURE LAYER                                 │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
 │  DATABASES:                          MESSAGING:                             │
 │  • postgres:5433                     • kafka:9092                           │
 │    Main DB (PostgreSQL 16)             Event Streaming                      │
-│                                                                             │
+│                                                                              │
 │  • payment-db:5434                   • rabbitmq:5672,15672                  │
 │    Payment DB (PostgreSQL 16)          Message Queue                        │
-│                                                                             │
+│                                                                              │
 │  • redis:6379                        • payment-mq:5673,15673                │
 │    Cache (Redis 7)                     Payment Queue                        │
-│                                                                             │
-│  MONITORING:                                                                │
-│  • prometheus:9090 - Metrics                                                │
-│  • tempo:3200 - Distributed Tracing                                         │
-│  • otel-collector - Telemetry Collection                                    │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+│                                                                              │
+│  MONITORING:                                                                 │
+│  • prometheus:9090 - Metrics                                                 │
+│  • tempo:3200 - Distributed Tracing                                          │
+│  • otel-collector - Telemetry Collection                                     │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -146,7 +146,7 @@ INFRASTRUCTURE USED:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                    fraud-service:8086 - AI/ML PIPELINE                      │
+│                    fraud-service:8086 - AI/ML PIPELINE                       │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 TRANSACTION INPUT
@@ -174,16 +174,16 @@ TRANSACTION INPUT
              ├─────────────┬─────────────┬─────────────┐
              │             │             │             │
              ▼             ▼             ▼             │
-┌──────────────────┐ ┌──────────────┐ ┌─────────────┐  │
-│  XGBoost Model   │ │  Logistic    │ │ Rule Engine │  │
-│                  │ │  Regression  │ │             │  │
-│  Champion Model  │ │  Challenger  │ │ Thresholds  │  │
-│  95% Accuracy    │ │  92% Accuracy│ │ Blacklist   │  │
-│                  │ │              │ │             │  │
-│  Score: 0.85     │ │  Score: 0.78 │ │ Score: 0.90 │  │
-└────────┬─────────┘ └──────┬───────┘ └──────┬──────┘  │
-         │                  │                │         │
-         └──────────────────┼────────────────┘         │
+┌──────────────────┐ ┌──────────────┐ ┌─────────────┐ │
+│  XGBoost Model   │ │  Logistic    │ │ Rule Engine │ │
+│                  │ │  Regression  │ │             │ │
+│  Champion Model  │ │  Challenger  │ │ Thresholds  │ │
+│  95% Accuracy    │ │  92% Accuracy│ │ Blacklist   │ │
+│                  │ │              │ │             │ │
+│  Score: 0.85     │ │  Score: 0.78 │ │ Score: 0.90 │ │
+└────────┬─────────┘ └──────┬───────┘ └──────┬──────┘ │
+         │                  │                 │        │
+         └──────────────────┼─────────────────┘        │
                             │                          │
                             ▼                          │
                   ┌──────────────────┐                 │
@@ -231,18 +231,18 @@ TRANSACTION INPUT
 ### 4. Deployment Architecture
 
 ```
-┌────────────────────────────────────────────────────────────────────────────┐
-│                      DEVELOPMENT ENVIRONMENT                               │
-│                         (Docker Compose)                                   │
-├────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│  NATIVE SERVICES (5):                    JVM SERVICES (2):                 │
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      DEVELOPMENT ENVIRONMENT                                 │
+│                         (Docker Compose)                                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  NATIVE SERVICES (5):                    JVM SERVICES (2):                  │
 │  ┌─────────────────────┐                 ┌──────────────────────┐          │
 │  │ api-gateway:8080    │                 │ payment-service:8082 │          │
 │  │ auth-service:8081   │                 │ fraud-service:8086   │          │
 │  │ vault-service:8084  │                 └──────────────────────┘          │
-│  │ merchant-service    │                                                   │
-│  │   :8083             │                 INFRASTRUCTURE (6):               │
+│  │ merchant-service    │                                                    │
+│  │   :8083             │                 INFRASTRUCTURE (6):                │
 │  │ notification-service│                 ┌──────────────────────┐          │
 │  │   :8085             │                 │ postgres:5433        │          │
 │  └─────────────────────┘                 │ payment-db:5434      │          │
@@ -251,65 +251,65 @@ TRANSACTION INPUT
 │  Build: mvn spring-boot:build-image      │ rabbitmq:5672        │          │
 │         -Pnative                         │ payment-mq:5673      │          │
 │                                          └──────────────────────┘          │
-│                                                                            │
-│  Command: task start  OR  task up:hybrid                                   │
-│                                                                            │
-└──────────────────────────────┬─────────────────────────────────────────────┘
-                               │
-                               ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           CI/CD PIPELINE                                    │
-│                          (GitHub Actions)                                   │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  1. TEST                2. BUILD NATIVE       3. BUILD JVM      4. PUSH     │
-│  ┌──────────┐          ┌──────────────┐      ┌───────────┐    ┌─────────┐   │
-│  │ mvn test │  ──────▶ │ mvn spring-  │ ───▶ │ mvn       │ ─▶ │ Docker  │   │
-│  │          │          │ boot:build-  │      │ spring-   │    │ Registry│   │
-│  │ JUnit    │          │ image        │      │ boot:     │    │         │   │
-│  │ Mockito  │          │ -Pnative     │      │ build-    │    │ Images  │   │
-│  └──────────┘          │              │      │ image     │    │ Tagged  │   │
-│                        │ Buildpacks   │      │           │    └─────────┘   │
-│                        │ + GraalVM    │      │ Buildpacks│                  │
-│                        └──────────────┘      └───────────┘                  │
-│                                                                             │
+│                                                                              │
+│  Command: task start  OR  task up:hybrid                                    │
+│                                                                              │
 └──────────────────────────────┬──────────────────────────────────────────────┘
                                │
                                ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                      PRODUCTION ENVIRONMENT                                 │
-│                          (Kubernetes)                                       │
+│                           CI/CD PIPELINE                                     │
+│                          (GitHub Actions)                                    │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  NATIVE PODS (Auto-scale: 3-10)      JVM PODS (Auto-scale: 2-5)             │
-│  ┌──────────────────────────┐        ┌──────────────────────────┐           │
-│  │ api-gateway              │        │ payment-service          │           │
-│  │ ├─ pod-1                 │        │ ├─ pod-1                 │           │
-│  │ ├─ pod-2                 │        │ └─ pod-2                 │           │
-│  │ └─ pod-3                 │        │                          │           │
-│  │                          │        │ fraud-service            │           │
-│  │ auth-service             │        │ ├─ pod-1                 │           │
-│  │ vault-service            │        │ └─ pod-2                 │           │
-│  │ merchant-service         │        └──────────────────────────┘           │
+│                                                                              │
+│  1. TEST                2. BUILD NATIVE       3. BUILD JVM      4. PUSH     │
+│  ┌──────────┐          ┌──────────────┐      ┌───────────┐    ┌─────────┐ │
+│  │ mvn test │  ──────▶ │ mvn spring-  │ ───▶ │ mvn       │ ─▶ │ Docker  │ │
+│  │          │          │ boot:build-  │      │ spring-   │    │ Registry│ │
+│  │ JUnit    │          │ image        │      │ boot:     │    │         │ │
+│  │ Mockito  │          │ -Pnative     │      │ build-    │    │ Images  │ │
+│  └──────────┘          │              │      │ image     │    │ Tagged  │ │
+│                        │ Buildpacks   │      │           │    └─────────┘ │
+│                        │ + GraalVM    │      │ Buildpacks│                │
+│                        └──────────────┘      └───────────┘                │
+│                                                                              │
+└──────────────────────────────┬──────────────────────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      PRODUCTION ENVIRONMENT                                  │
+│                          (Kubernetes)                                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  NATIVE PODS (Auto-scale: 3-10)      JVM PODS (Auto-scale: 2-5)            │
+│  ┌──────────────────────────┐        ┌──────────────────────────┐          │
+│  │ api-gateway              │        │ payment-service          │          │
+│  │ ├─ pod-1                 │        │ ├─ pod-1                 │          │
+│  │ ├─ pod-2                 │        │ └─ pod-2                 │          │
+│  │ └─ pod-3                 │        │                          │          │
+│  │                          │        │ fraud-service            │          │
+│  │ auth-service             │        │ ├─ pod-1                 │          │
+│  │ vault-service            │        │ └─ pod-2                 │          │
+│  │ merchant-service         │        └──────────────────────────┘          │
 │  │ notification-service     │                                               │
-│  └──────────────────────────┘        Resources:                             │
+│  └──────────────────────────┘        Resources:                            │
 │                                       CPU: 1 core                           │
 │  Resources:                           Memory: 512MB                         │
 │  CPU: 0.25 core                       Always-on (warm JIT)                  │
 │  Memory: 100MB                                                              │
 │  Scale-to-zero capable                                                      │
-│                                                                             │
+│                                                                              │
 │  PERSISTENT VOLUMES:                  MONITORING:                           │
 │  • postgres-pv                        • prometheus:9090                     │
 │  • payment-db-pv                      • tempo:3200                          │
 │  • redis-pv                           • grafana:3000                        │
 │  • kafka-pv                           • otel-collector                      │
 │  • rabbitmq-pv                                                              │
-│                                                                             │
+│                                                                              │
 │  LOAD BALANCER: Ingress Controller (NGINX)                                  │
 │  DEPLOYMENT: Blue/Green with Rolling Updates                                │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -318,7 +318,7 @@ TRANSACTION INPUT
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                    DETAILED DATA FLOW EXAMPLE                               │
+│                    DETAILED DATA FLOW EXAMPLE                                │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 STEP 1: Client Request
@@ -495,3 +495,4 @@ task audit
 
 ---
 
+For visual diagrams, see the artifact directory with 5 professional diagrams already generated.

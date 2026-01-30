@@ -19,95 +19,94 @@ import reactor.test.StepVerifier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class JwtAuthenticationFilterTest {
 
-    @Mock
-    private JwtUtil jwtUtil;
+        @Mock
+        private JwtUtil jwtUtil;
 
-    @Mock
-    private GatewayFilterChain chain;
+        @Mock
+        private GatewayFilterChain chain;
 
-    private JwtAuthenticationFilter filter;
+        private JwtAuthenticationFilter filter;
 
-    @BeforeEach
-    public void setUp() {
-        filter = new JwtAuthenticationFilter(jwtUtil);
-    }
+        @BeforeEach
+        public void setUp() {
+                filter = new JwtAuthenticationFilter(jwtUtil);
+        }
 
-    @Test
-    public void filter_WithNoAuthHeader_ReturnsUnauthorized() {
-        MockServerHttpRequest request = MockServerHttpRequest.get("/test").build();
-        MockServerWebExchange exchange = MockServerWebExchange.from(request);
+        @Test
+        public void filter_WithNoAuthHeader_ReturnsUnauthorized() {
+                MockServerHttpRequest request = MockServerHttpRequest.get("/test").build();
+                MockServerWebExchange exchange = MockServerWebExchange.from(request);
 
-        GatewayFilter gatewayFilter = filter.apply(new JwtAuthenticationFilter.Config());
-        Mono<Void> result = gatewayFilter.filter(exchange, chain);
+                GatewayFilter gatewayFilter = filter.apply(new JwtAuthenticationFilter.Config());
+                Mono<Void> result = gatewayFilter.filter(exchange, chain);
 
-        StepVerifier.create(result)
-                .verifyComplete();
+                StepVerifier.create(result)
+                                .verifyComplete();
 
-        assertEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
-        verify(chain, never()).filter(any());
-    }
+                assertEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
+                verify(chain, never()).filter(any());
+        }
 
-    @Test
-    public void filter_WithInvalidAuthHeader_ReturnsUnauthorized() {
-        MockServerHttpRequest request = MockServerHttpRequest.get("/test")
-                .header(HttpHeaders.AUTHORIZATION, "InvalidBearer token")
-                .build();
-        MockServerWebExchange exchange = MockServerWebExchange.from(request);
+        @Test
+        public void filter_WithInvalidAuthHeader_ReturnsUnauthorized() {
+                MockServerHttpRequest request = MockServerHttpRequest.get("/test")
+                                .header(HttpHeaders.AUTHORIZATION, "InvalidBearer token")
+                                .build();
+                MockServerWebExchange exchange = MockServerWebExchange.from(request);
 
-        GatewayFilter gatewayFilter = filter.apply(new JwtAuthenticationFilter.Config());
-        Mono<Void> result = gatewayFilter.filter(exchange, chain);
+                GatewayFilter gatewayFilter = filter.apply(new JwtAuthenticationFilter.Config());
+                Mono<Void> result = gatewayFilter.filter(exchange, chain);
 
-        StepVerifier.create(result)
-                .verifyComplete();
+                StepVerifier.create(result)
+                                .verifyComplete();
 
-        assertEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
-        verify(chain, never()).filter(any());
-    }
+                assertEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
+                verify(chain, never()).filter(any());
+        }
 
-    @Test
-    public void filter_WithInvalidToken_ReturnsUnauthorized() {
-        MockServerHttpRequest request = MockServerHttpRequest.get("/test")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer invalid-token")
-                .build();
-        MockServerWebExchange exchange = MockServerWebExchange.from(request);
-        when(jwtUtil.validateToken("invalid-token")).thenReturn(false);
+        @Test
+        public void filter_WithInvalidToken_ReturnsUnauthorized() {
+                MockServerHttpRequest request = MockServerHttpRequest.get("/test")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer invalid-token")
+                                .build();
+                MockServerWebExchange exchange = MockServerWebExchange.from(request);
+                when(jwtUtil.validateToken("invalid-token")).thenReturn(false);
 
-        GatewayFilter gatewayFilter = filter.apply(new JwtAuthenticationFilter.Config());
-        Mono<Void> result = gatewayFilter.filter(exchange, chain);
+                GatewayFilter gatewayFilter = filter.apply(new JwtAuthenticationFilter.Config());
+                Mono<Void> result = gatewayFilter.filter(exchange, chain);
 
-        StepVerifier.create(result)
-                .verifyComplete();
+                StepVerifier.create(result)
+                                .verifyComplete();
 
-        assertEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
-        verify(chain, never()).filter(any());
-    }
+                assertEquals(HttpStatus.UNAUTHORIZED, exchange.getResponse().getStatusCode());
+                verify(chain, never()).filter(any());
+        }
 
-    @Test
-    public void filter_WithValidToken_AppliesFilter() {
-        MockServerHttpRequest request = MockServerHttpRequest.get("/test")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer valid-token")
-                .build();
-        MockServerWebExchange exchange = MockServerWebExchange.from(request);
+        @Test
+        public void filter_WithValidToken_AppliesFilter() {
+                MockServerHttpRequest request = MockServerHttpRequest.get("/test")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer valid-token")
+                                .build();
+                MockServerWebExchange exchange = MockServerWebExchange.from(request);
 
-        when(jwtUtil.validateToken("valid-token")).thenReturn(true);
-        when(jwtUtil.extractUsername("valid-token")).thenReturn("testuser");
-        when(chain.filter(any())).thenReturn(Mono.empty());
+                when(jwtUtil.validateToken("valid-token")).thenReturn(true);
+                when(jwtUtil.extractUsername("valid-token")).thenReturn("testuser");
+                when(chain.filter(any())).thenReturn(Mono.empty());
 
-        GatewayFilter gatewayFilter = filter.apply(new JwtAuthenticationFilter.Config());
-        Mono<Void> result = gatewayFilter.filter(exchange, chain);
+                GatewayFilter gatewayFilter = filter.apply(new JwtAuthenticationFilter.Config());
+                Mono<Void> result = gatewayFilter.filter(exchange, chain);
 
-        StepVerifier.create(result)
-                .verifyComplete();
+                StepVerifier.create(result)
+                                .verifyComplete();
 
-        ArgumentCaptor<ServerWebExchange> captor = ArgumentCaptor.forClass(ServerWebExchange.class);
-        verify(chain).filter(captor.capture());
-        ServerWebExchange mutatedExchange = captor.getValue();
-        assertEquals("testuser", mutatedExchange.getRequest().getHeaders().getFirst("X-Auth-User"));
-    }
+                ArgumentCaptor<ServerWebExchange> captor = ArgumentCaptor.forClass(ServerWebExchange.class);
+                verify(chain).filter(captor.capture());
+                ServerWebExchange mutatedExchange = captor.getValue();
+                assertEquals("testuser", mutatedExchange.getRequest().getHeaders().getFirst("X-Auth-User"));
+        }
 }

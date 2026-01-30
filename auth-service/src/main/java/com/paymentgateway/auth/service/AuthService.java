@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 @Service
@@ -35,7 +36,7 @@ public class AuthService {
                 .roles(request.getRoles() == null ? Set.of("MERCHANT") : request.getRoles())
                 .build();
 
-        userRepository.save(user);
+        userRepository.save(Objects.requireNonNull(user));
 
         return login(new AuthRequest(request.getUsername(), request.getPassword()));
     }

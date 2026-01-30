@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -44,7 +46,7 @@ public class ShadowMetricsService {
                                         .type(type)
                                         .build();
 
-                        repository.save(disagreement);
+                        repository.save(Objects.requireNonNull(disagreement));
 
                         meterRegistry.counter("fraud.model.disagreement", "type", type.name()).increment();
 

@@ -16,11 +16,12 @@ public class JwtUtilTest {
 
     @BeforeEach
     public void setUp() {
-        jwtUtil = new JwtUtil();
+        JwtUtil util = new JwtUtil();
+        this.jwtUtil = util;
         // Inject test values for @Value annotated fields
-        ReflectionTestUtils.setField(jwtUtil, "secret",
+        ReflectionTestUtils.setField(util, "secret",
                 "ThisIsAVeryLongSecretKeyForJWTTokenGenerationAndValidation12345");
-        ReflectionTestUtils.setField(jwtUtil, "expiration", 3600000L);
+        ReflectionTestUtils.setField(util, "expiration", 3600000L);
     }
 
     @Test
@@ -50,6 +51,7 @@ public class JwtUtilTest {
     }
 
     @Test
+    @SuppressWarnings("null")
     public void isTokenExpired_WithExpiredToken_ReturnsTrue() {
         ReflectionTestUtils.setField(jwtUtil, "expiration", -1000L); // Set negative expiration
         String token = jwtUtil.generateToken("testuser", new HashMap<>());

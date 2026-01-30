@@ -18,6 +18,7 @@ import java.nio.FloatBuffer;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 
@@ -131,12 +132,13 @@ public class FraudDetectionService {
         String velocityKey = "velocity:" + request.getUserId();
 
         return redisTemplate.opsForValue().increment(velocityKey)
-                .doOnNext(count -> redisTemplate.expire(velocityKey, Duration.ofHours(1)).subscribe())
+                .doOnNext(count -> redisTemplate.expire(velocityKey, Objects.requireNonNull(Duration.ofHours(1)))
+                        .subscribe())
                 .map(count -> {
                     float[] features = new float[11];
                     // Common Features [0-4]
                     features[0] = request.getAmount().floatValue();
-                    features[1] = count.floatValue();
+                    features[1] = Objects.requireNonNull(count).floatValue();
                     features[2] = isNightTime() ? 1.0f : 0.0f;
                     features[3] = (float) Math.abs(request.getAmount() - 1000.0f); // Avg deviation
                     features[4] = request.getDeviceFingerprint() == null ? 1.0f : 0.0f;
