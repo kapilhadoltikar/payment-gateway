@@ -32,7 +32,7 @@ jobs:
           cache: "maven"
 
       - name: Build and Test with Maven
-        run: mvn clean verify -Dnative.skip=true
+        run: mvn clean verify -Dnative.skip=true -U
 
       - name: Archive generated documentation
         uses: actions/upload-artifact@v4
