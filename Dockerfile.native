@@ -1,0 +1,15 @@
+# Generic Native Image Dockerfile for Payment Gateway Services
+FROM ubuntu:jammy
+
+ARG SERVICE_NAME
+ENV SERVICE_NAME=${SERVICE_NAME}
+
+WORKDIR /app
+
+# Copy the built native binary from the specific service directory
+# The binary is typically named [service-name]
+COPY ${SERVICE_NAME}/target/${SERVICE_NAME} app-native
+
+EXPOSE 8080
+
+ENTRYPOINT ["./app-native"]

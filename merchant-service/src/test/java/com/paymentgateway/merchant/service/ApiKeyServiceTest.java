@@ -37,11 +37,24 @@ public class ApiKeyServiceTest {
     }
 
     @Test
+    public void hashApiKey_Invalid_ThrowsException() {
+        assertThrows(com.paymentgateway.common.exception.BusinessException.class, () -> apiKeyService.hashApiKey(""));
+        assertThrows(com.paymentgateway.common.exception.BusinessException.class, () -> apiKeyService.hashApiKey(null));
+    }
+
+    @Test
+    public void validateApiKey_Nulls_ReturnsFalse() {
+        assertFalse(apiKeyService.validateApiKey(null, "hashed"));
+        assertFalse(apiKeyService.validateApiKey("plain", null));
+    }
+
+    @Test
     public void isValidFormat_CorrectlyIdentifiesPrefixes() {
         assertTrue(apiKeyService.isValidFormat("pk_live_abc"));
         assertTrue(apiKeyService.isValidFormat("pk_test_abc"));
         assertFalse(apiKeyService.isValidFormat("invalid_abc"));
         assertFalse(apiKeyService.isValidFormat(null));
+        assertFalse(apiKeyService.isValidFormat(""));
     }
 
     @Test

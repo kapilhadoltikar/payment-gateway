@@ -75,6 +75,25 @@ public class MerchantServiceTest {
         }
 
         @Test
+        public void getMerchant_Success() {
+                Merchant merchant = Merchant.builder()
+                                .id("m1")
+                                .name("Test Merchant")
+                                .email("test@example.com")
+                                .apiKey("hashed_key")
+                                .status(Merchant.MerchantStatus.ACTIVE)
+                                .build();
+
+                when(merchantRepository.findById("m1")).thenReturn(Optional.of(merchant));
+
+                MerchantResponse response = merchantService.getMerchant("m1");
+
+                assertNotNull(response);
+                assertEquals("pk_****", response.getApiKey());
+                assertEquals("m1", response.getId());
+        }
+
+        @Test
         public void getMerchant_NotFound_ThrowsException() {
                 when(merchantRepository.findById("unknown")).thenReturn(Optional.empty());
                 assertThrows(BusinessException.class, () -> merchantService.getMerchant("unknown"));
@@ -92,5 +111,17 @@ public class MerchantServiceTest {
                 when(apiKeyService.validateApiKey("plain", "hashed")).thenReturn(true);
 
                 assertTrue(merchantService.validateMerchantApiKey("m1", "plain"));
+        }
+
+        @Test
+        public void validateMerchantApiKey_Inactive_ThrowsException() {
+                Merchant merchant = Merchant.builder()
+                                .id("m1")
+                                .status(Merchant.MerchantStatus.INACTIVE)
+                                .build();
+
+                when(merchantRepository.findById("m1")).thenReturn(Optional.of(merchant));
+
+                assertThrows(BusinessException.class, () -> merchantService.validateMerchantApiKey("m1", "plain"));
         }
 }

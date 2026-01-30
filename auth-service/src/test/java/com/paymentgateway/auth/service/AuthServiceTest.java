@@ -94,4 +94,26 @@ class AuthServiceTest {
 
         assertThrows(RuntimeException.class, () -> authService.login(request));
     }
+
+    @Test
+    @SuppressWarnings("null")
+    void register_NullRoles_Success() {
+        // Arrange
+        RegisterRequest request = new RegisterRequest("user", "pass", "user@test.com", null);
+        User savedUser = User.builder().username("user").password("encoded").email("user@test.com")
+                .roles(Set.of("MERCHANT")).build();
+
+        when(userRepository.existsByUsername("user")).thenReturn(false);
+        when(passwordEncoder.encode("pass")).thenReturn("encoded");
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(savedUser));
+        when(passwordEncoder.matches("pass", "encoded")).thenReturn(true);
+        when(jwtUtil.generateToken(eq("user"), any())).thenReturn("jwt-token");
+
+        // Act
+        AuthResponse response = authService.register(request);
+
+        // Assert
+        assertNotNull(response.getToken());
+        verify(userRepository).save(any(User.class));
+    }
 }

@@ -11,6 +11,10 @@ public class RabbitMQWebhookConsumer {
 
     @RabbitListener(queues = "webhook-queue")
     public void consume(Transaction transaction) {
+        if (transaction == null) {
+            log.warn("Received null transaction from webhook-queue");
+            return;
+        }
         log.info("Processing webhook delivery for transaction: {}", transaction.getId());
 
         // In production, fetch merchant's webhook URL from merchant-service
