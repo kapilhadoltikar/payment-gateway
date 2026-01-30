@@ -1,6 +1,19 @@
-# High-Performance Distributed Payment Gateway
+# 🏦 High-Performance Distributed Payment Gateway
 
-![CI/CD Pipeline](https://github.com/${{ github.repository }}/actions/workflows/ci.yml/badge.svg)
+[![CI/CD Pipeline](https://github.com/kapilhadoltikar/payment-gateway/actions/workflows/main.yml/badge.svg)](https://github.com/kapilhadoltikar/payment-gateway/actions/workflows/main.yml)
+![Coverage](https://img.shields.io/badge/Coverage-93%25-brightgreen)
+
+![Java](https://img.shields.io/badge/Java-21-orange)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.2-brightgreen)
+![GraalVM](https://img.shields.io/badge/GraalVM-Native%20Image-orange)
+![Kafka](https://img.shields.io/badge/Kafka-3.9-black)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
+![Redis](https://img.shields.io/badge/Redis-7-red)
+
+
+![License](https://img.shields.io/badge/License-Apache%202.0-orange)
+
+
 
 > **Enterprise-Grade Architecture**: A regulatory-compliant payment platform combining **GraalVM Native Image** for instant scaling and **Standard JVM** for high-throughput processing. Designed for **PCI-DSS Level 1** compliance and **Zero Trust** security.
 
@@ -10,26 +23,76 @@ This system addresses critical challenges in the financial sector: **Compliance*
 
 -   **🛡️ Banking-Grade Compliance**: Implements a **Zero Trust** security model with **PCI-DSS** ready architecture. Sensitive card data is isolated in a secure **Vault Service** using AES-256-GCM encryption.
 -   **💰 Transactional Integrity**: Ensures **100% financial consistency** using the **Saga Pattern** and **Kafka Event Sourcing**. No transaction is lost; audit trails are immutable.
--   **⚡ Hybrid Runtime Strategy**: Optimizes infrastructure spend by running stateless control services (Auth, Gateway) as **GraalVM Native Images** (0.4s startup, 120MB RAM) while keeping compute-heavy engines (Payment, Fraud) on the **JVM** for peak throughput.
+
+-   **⚡ Hybrid Runtime Strategy**: Orchestrates a bifurcated deployment: **GraalVM Native Images** for the Control Plane (0.4s cold starts, 85% memory saving) vs. **Standard JVM** for the Data Plane (JIT-optimized for mathematical throughput).
 -   **🧠 AI-Powered Risk Management (Champion-Challenger)**: A production-grade **Dual Inference Engine** running Logistic Regression (Champion) and XGBoost (Challenger) in parallel. Ensures 0-risk validation of new models while maintaining **<1ms decision latency**.
 -   **👁️ Full-Stack Observability**: End-to-end distributed tracing via **OpenTelemetry** and **Tempo** provides complete audit trails for every transaction, satisfying strict regulatory requirements (PSD2/GDPR).
 
 ---
 
-## 👨‍💻 Recruiter & Developer Demo: Quickest way to Test
+## 🏛️ System Architecture
 
-If you want to see the system in action without reading the full docs, follow these 3 steps:
+### 1. Hybrid Lifecycle Mastery
+We optimize infrastructure spend by matching the runtime to the workload:
 
-1.  **Launch the Stack**: `task start` (Wait ~60s for all 7 services to stabilize).
-2.  **Access Swagger**: Open the [API Gateway UI (Port 8080)](http://localhost:8080/swagger-ui.html).
-3.  **Run a Test Case**: 
-    - Click **Authorize** (Value: `Bearer RECRUITER_DEMO_2026`)
-    - Go to `POST /payments/process`
-    - Execute with `amount: 150.0` (Expect: **AUTHORIZED**)
-    - Execute with `amount: 250.0` (Expect: **FAILED** - Triggered by Fraud Service AI)
+| Workload Type | Services | Runtime | Optimization |
+| :--- | :--- | :--- | :--- |
+| **Control Plane** | Gateway, Auth, Merchant, Notification, Vault | **GraalVM Native** | Instant 0.4s horizontal scaling for traffic bursts. |
+| **Data Plane** | Payment, Fraud | **Standard JVM** | Peak computational throughput (C2 JIT) for ML/Saga logic. |
 
-> [!TIP]
-> **New to Swagger?** Check out our [Detailed Swagger Testing Guide](SWAGGER_TEST_GUIDE.md) for step-by-step instructions on authentication and advanced payment scenarios.
+### 2. Transaction Flow (Saga Pattern)
+
+This diagram visualizes the end-to-end lifecycle of a payment, including synchronous API calls, security tokenization, parallel AI fraud detection, and asynchronous event-driven updates.
+
+
+```mermaid
+    sequenceDiagram
+    autonumber
+    participant M as Merchant
+    participant G as Gateway (GraalVM)
+    participant V as Vault (GraalVM)
+    participant F as Fraud (JVM 21)
+    participant P as Payment (JVM 21)
+    participant K as Kafka
+    participant N as Notify Service
+
+    Note over G, V: Control Plane - Native Images
+    M->>G: POST /payments (Idempotency Key)
+    G->>V: Tokenize Card Data (AES-256-GCM)
+    V-->>G: Return Token
+    
+    Note over F: Data Plane - JVM 21
+    G->>F: Risk Assessment Request
+    rect rgb(225, 245, 254)
+        Note over F: Dual Inference (Virtual Threads)<br/>LogReg & XGBoost
+    end
+    F-->>G: Risk Score (Approved)
+
+    G->>P: Process Payment
+    P->>P: Atomic Ledger Update
+    P->>K: Publish Payment Event
+    P-->>M: 201 Authorized
+
+    Note over K, N: Asynchronous Plane
+    K->>N: Consume Event
+    N->>M: Webhook Call (via MQ)
+    N-->>M: Push Notification (Customer)
+```
+
+
+### Flow Description
+
+1.  **Ingress**: The Merchant sends a payment request. The **Gateway** (Native) ensures the **Idempotency Key** is present to prevent duplicate processing.
+2.  **Security Boundary**: Card data is immediately sent to the **Vault Service**. It is encrypted with **AES-256-GCM** and stored, returning an opaque token.
+3.  **Parallel Risk Scoring**: The **Fraud Service** (JVM) uses **Java 21 Virtual Threads** to run two ML models (Champion/Challenger) in parallel via ONNX.
+4.  **Transaction Integrity**: The **Payment Service** (JVM) executes the business logic, updates the isolated **Payment DB**, and broadcasts a success event via **Kafka**.
+5.  **Event-Driven Evolution**: **Notification** and **Merchant** services consume Kafka events asynchronously to update balances and send merchant webhooks via **RabbitMQ**.
+
+
+
+
+---
+
 
 ## 🕹️ Quick Start
 
@@ -44,7 +107,7 @@ This workflow follows **banking-sector best practices** with complete infrastruc
 
 1.  **Setup Environment**:
     ```powershell
-    copy-item .env.example .env
+    copy-item .env.example #  to.env
     ```
 
 2.  **Start Everything** (Infrastructure + All Services):
@@ -86,7 +149,7 @@ For teams focusing on infrastructure cost-optimization:
 
 1.  **Setup Environment**:
     ```powershell
-    copy-item .env.example .env
+    copy-item .env.example  # to .env
     ```
 2.  **Verify & Build**:
     ```powershell
@@ -103,7 +166,7 @@ If you don't have `task` installed:
 
 1.  **Setup Environment**:
     ```powershell
-    copy-item .env.example .env
+    copy-item .env.example  # to .env
     ```
 2.  **Start Infrastructure**:
     ```powershell
@@ -120,100 +183,13 @@ If you don't have `task` installed:
     ```
 
 **Access Points**:
--   **Swagger UI**: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html) (Token: `RECRUITER_DEMO_2026`)
+-   **Swagger UI**: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html) (Token: `DEMO_2026`)
 -   **Grafana Dashboards**: [http://localhost:3000](http://localhost:3000) (Login: `admin/admin`)
 -   **Distributed Tracing (Tempo)**: [http://localhost:16686](http://localhost:16686)
 -   **Metrics (Prometheus)**: [http://localhost:9090](http://localhost:9090)
 
 ---
 
-## 🏛️ System Architecture
-
-### Microservices Ecosystem
-
-The system consists of 7 specialized microservices optimized by workload:
-
-| Service | Role | Runtime | Optimization |
-|:--- |:--- |:--- |:--- |
-| **API Gateway** | Entry point, Rate Limiting | **Native** | Instant scale-up for bursts |
-| **Auth Service** | Identity (OAuth2/JWT) | **Native** | Low latency security checks |
-| **Vault Service** | PCI-DSS Tokenization | **Native** | Isolated, small attack surface |
-| **Merchant Service** | Profile Management | **Native** | "Scale-to-zero" cost savings |
-| **Notification Service** | Async Alerts (Email/Webhooks) | **Native** | High density worker pods |
-| **Payment Service** | Transaction Engine (Sagas) | **JVM** | Max throughput (C2 JIT) |
-| **Fraud Service** | AI Risk Scoring (XGBoost) | **JVM** | Math/Vector performance |
-
-### Banking Infrastructure
-
-The system includes dedicated banking-grade infrastructure for transaction isolation and compliance:
-
-| Component | Purpose | Technology | Port |
-|:--- |:--- |:--- |:--- |
-| **payment-db** | Dedicated payment transaction database | PostgreSQL 16 | 5434 |
-| **payment-mq** | Async payment processing queue | RabbitMQ | 5673 |
-| **postgres** | General application data | PostgreSQL 16 | 5433 |
-| **kafka** | Event streaming & audit trail | Apache Kafka | 9092 |
-| **redis** | Caching & rate limiting | Redis 7 | 6379 |
-
-**Access Banking Infrastructure**:
-```powershell
-task db-shell              # Payment database shell
-task docker:up:banking     # Start only banking infrastructure
-```
-
-### C4 High-Level Context
-Explicit separation of the Public Internet from the PCI-DSS Trust Boundary.
-
-```mermaid
-C4Context
-    title System Context Diagram for Payment Gateway
-
-    Person(merchant, "Merchant", "A business user wanting to process payments.")
-    System(gateway, "Payment Gateway System", "Securely processes financial transactions and provides vaulting services.")
-    
-    System_Ext(bank, "Acquiring Bank", "Financial institution that processes payment requests.")
-    System_Ext(notification, "Notification Providers", "External services (Email, SMS) for merchant alerts.")
-
-    Rel(merchant, gateway, "Submits payment requests via API")
-    Rel(gateway, bank, "Authorizes and settles transactions")
-    Rel(gateway, notification, "Sends webhook events and alerts")
-
-    UpdateBoundaryStyle(vault_boundary, $color="red", $type="dashed")
-    Boundary(trust_boundary, "PCI-DSS Trust Boundary") {
-        System(vault, "Secure Vault Service", "Stores sensitive Cardholder Data (CHD) using AES-256-GCM.")
-    }
-
-    Rel(gateway, vault, "Tokenizes/Detokenizes card data", "mTLS / Internal")
-```
-
----
-
-## 🔧 Technical Deep Dive
-
-### 1. Performance Engineering (The Hybrid Runtime)
-We optimize based on workload patterns:
--   **Control Plane (GraalVM Native)**: Services like *API Gateway* and *Auth* handle bursty traffic. Native Image provides **0.4s cold starts**, enabling instant serverless-style scaling.
--   **Data Plane (JVM 25)**: *Payment* and *Fraud* services perform heavy computation. We use the JIT C2 compiler and **Virtual Threads** (Project Loom) for maximum sustained throughput (**180+ RPS**).
-
-### 2. 🛡️ Security & DevOps Architecture (Zero Trust)
-This project goes beyond basic authentication:
--   **Identity-Based Secret Management**: We use **HashiCorp Vault** to inject secrets directly into memory. CI/CD runners access secrets via a restrictive `policy.hcl` (Least Privilege).
--   **Memory-Safe CI/CD**: The pipeline builds GraalVM images on standard GitHub Runners by intelligently throttling memory (`-J-Xmx5g`).
--   **Automated Compliance**: PCI-DSS rules (Encryption, Tokenization) are enforced via code and validated in the CI pipeline.
-
-### 3. 🧠 AI-Driven Fraud Detection (Champion-Challenger)
-A dual-model architecture designed for **Zero-Risk Model Evolution**:
-1.  **Parallel Execution**: Every transaction is scored by both the *Champion* (Logistic Regression, 0.8ms) and *Challenger* (XGBoost, 4.5ms) simultaneously using **Virtual Threads**.
-2.  **Shadow Mode**: The Challenger runs in shadow mode, logging "disagreements" to a dedicated database without affecting production decisions.
-3.  **Live Calibration**: Data Science teams monitor live performance metrics (Precision/Recall) via Grafana before promoting the Challenger.
-
-### 4. 👁️ Operational Excellence (Observability stack)
-We prioritize system visibility for SREs and Auditors:
--   **Distributed Tracing**: `OpenTelemetry` agents trace requests across all 7 microservices (Gateway -> Auth -> Payment -> Fraud).
--   **Metrics**: `Prometheus` scrapes JVM and business metrics (RPS, Latency, Fraud Rates).
--   **Correlation**: Traces are linked to logs and metrics, allowing instant root-cause analysis of failed transactions.
-
----
 
 ## 📊 Performance Benchmarks
 
@@ -231,7 +207,6 @@ The system has been benchmarked under high-concurrency scenarios to verify the *
 *Test Configuration: 10 concurrent threads, 60-second duration, 12,480 total requests. Benchmarked on Local Docker JVM Stack.*
 
 ---
-
 
 ## 💻 Tech Stack
 
@@ -305,13 +280,100 @@ We maintain high-fidelity documentation through a dual-strategy:
 
 ---
 
-## 🚢 Continuous Delivery (The "Gatekeeper")
+## 🏛️ System Architecture
 
-Our [GitHub Actions workflow](.github/workflows/main.yml) acts as a strict gatekeeper:
+### Microservices Ecosystem
 
--   **Phase 1: CI**: Runs all unit and integration tests, including REST Docs generation.
--   **Phase 2: Build**: Builds both Standard JVM Jars and GraalVM Native Images.
--   **Phase 3: Deploy**: (Configured for Kubernetes)
+The system consists of 7 specialized microservices optimized by workload:
+
+| Service | Role | Runtime | Optimization |
+|:--- |:--- |:--- |:--- |
+| **API Gateway** | Entry point, Rate Limiting | **Native** | Instant scale-up for bursts |
+| **Auth Service** | Identity (OAuth2/JWT) | **Native** | Low latency security checks |
+| **Vault Service** | PCI-DSS Tokenization | **Native** | Isolated, small attack surface |
+| **Merchant Service** | Profile Management | **Native** | "Scale-to-zero" cost savings |
+| **Notification Service** | Async Alerts (Email/Webhooks) | **Native** | High density worker pods |
+| **Payment Service** | Transaction Engine (Sagas) | **JVM** | Max throughput (C2 JIT) |
+| **Fraud Service** | AI Risk Scoring (XGBoost) | **JVM** | Math/Vector performance |
+
+### Banking Infrastructure
+
+The system includes dedicated banking-grade infrastructure for transaction isolation and compliance:
+
+| Component | Purpose | Technology | Port |
+|:--- |:--- |:--- |:--- |
+| **payment-db** | Dedicated payment transaction database | PostgreSQL 16 | 5434 |
+| **payment-mq** | Async payment processing queue | RabbitMQ | 5673 |
+| **postgres** | General application data | PostgreSQL 16 | 5433 |
+| **kafka** | Event streaming & audit trail | Apache Kafka | 9092 |
+| **redis** | Caching & rate limiting | Redis 7 | 6379 |
+
+**Access Banking Infrastructure**:
+```powershell
+task db-shell              # Payment database shell
+task docker:up:banking     # Start only banking infrastructure
+```
+
+### High-Level Context
+
+```mermaid
+    C4Context
+    title Enhanced System Context - Payment Gateway
+
+    Person(customer, "Customer", "The cardholder making a purchase.")
+    Person(merchant, "Merchant", "Business using the gateway to sell goods.")
+    
+    System_Boundary(pg_system, "Payment Provider Ecosystem") {
+        System(gateway, "Payment Gateway", "Handles orchestration, routing, and merchant logic.")
+        System(vault, "Secure Vault", "PCI-DSS Level 1 storage for CHD.")
+    }
+
+    System_Ext(bank, "Acquiring Bank", "Processes the financial settlement.")
+    System_Ext(networks, "Card Networks", "Visa, Mastercard, etc.")
+
+    Rel(customer, merchant, "Provides payment details")
+    Rel(merchant, gateway, "Sends transaction request (with tokens)")
+    Rel(gateway, vault, "Swaps tokens for encrypted CHD", "mTLS")
+    Rel(gateway, bank, "Sends authorization request")
+    Rel(bank, networks, "Clears and settles")
+
+```
 
 ---
 
+## 🔧 Technical Deep Dive
+
+### 1. Performance Engineering (The Hybrid Runtime)
+We optimize based on workload patterns:
+-   **Control Plane (GraalVM Native)**: Services like *API Gateway* and *Auth* handle bursty traffic. Native Image provides **0.4s cold starts**, enabling instant serverless-style scaling.
+-   **Data Plane (JVM 25)**: *Payment* and *Fraud* services perform heavy computation. We use the JIT C2 compiler and **Virtual Threads** (Project Loom) for maximum sustained throughput (**180+ RPS**).
+
+### 2. 🛡️ Security & DevOps Architecture (Zero Trust)
+This project goes beyond basic authentication:
+-   **Identity-Based Secret Management**: We use **HashiCorp Vault** to inject secrets directly into memory. CI/CD runners access secrets via a restrictive `policy.hcl` (Least Privilege).
+-   **Memory-Safe CI/CD**: The pipeline builds GraalVM images on standard GitHub Runners by intelligently throttling memory (`-J-Xmx5g`).
+-   **Automated Compliance**: PCI-DSS rules (Encryption, Tokenization) are enforced via code and validated in the CI pipeline.
+
+### 3. 🧠 AI-Driven Fraud Detection (Champion-Challenger)
+A dual-model architecture designed for **Zero-Risk Model Evolution**:
+1.  **Parallel Execution**: Every transaction is scored by both the *Champion* (Logistic Regression, 0.8ms) and *Challenger* (XGBoost, 4.5ms) simultaneously using **Virtual Threads**.
+2.  **Shadow Mode**: The Challenger runs in shadow mode, logging "disagreements" to a dedicated database without affecting production decisions.
+3.  **Live Calibration**: Data Science teams monitor live performance metrics (Precision/Recall) via Grafana before promoting the Challenger.
+
+### 4. 👁️ Operational Excellence (Observability stack)
+We prioritize system visibility for SREs and Auditors:
+-   **Distributed Tracing**: `OpenTelemetry` agents trace requests across all 7 microservices (Gateway -> Auth -> Payment -> Fraud).
+-   **Metrics**: `Prometheus` scrapes JVM and business metrics (RPS, Latency, Fraud Rates).
+-   **Correlation**: Traces are linked to logs and metrics, allowing instant root-cause analysis of failed transactions.
+
+---
+
+
+## 📖 Deep-Dive Documentation
+
+-   [Banking Compliance Guide](BANKING_SETUP.md) - PCI-DSS and SOC2 alignment details.
+-   [Hybrid Runtime Strategy](HYBRID_RUNTIME_STRATEGY.md) - Deep-dive into GraalVM vs JVM trade-offs.
+-   [API Testing Guide](SWAGGER_TEST_GUIDE.md) - Step-by-step walkthrough of the payment lifecycle.
+
+---
+**Engineering Note**: This project is built using a "Security-First" mindset. All sensitive data is tokenized at the edge, and all financial transactions are idempotent and auditable.
