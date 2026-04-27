@@ -152,7 +152,7 @@ services:
     ports:
       - "8081:8081"
     env_file:
-      - .env
+      - spring-boot-legacy/.env
     depends_on:
       postgres: { condition: service_healthy }
     networks: [payment-network]
@@ -163,7 +163,7 @@ services:
     ports:
       - "8082:8082"
     env_file:
-      - .env
+      - spring-boot-legacy/.env
     depends_on:
       payment-db: { condition: service_healthy }
       payment-mq: { condition: service_healthy }
@@ -177,7 +177,7 @@ services:
     ports:
       - "8083:8083"
     env_file:
-      - .env
+      - spring-boot-legacy/.env
     depends_on:
       postgres: { condition: service_healthy }
     networks: [payment-network]
@@ -188,7 +188,7 @@ services:
     ports:
       - "8084:8084"
     env_file:
-      - .env
+      - spring-boot-legacy/.env
     depends_on:
       postgres: { condition: service_healthy }
     networks: [payment-network]
@@ -199,7 +199,7 @@ services:
     ports:
       - "8085:8085"
     env_file:
-      - .env
+      - spring-boot-legacy/.env
     depends_on:
       kafka: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
@@ -211,7 +211,7 @@ services:
     ports:
       - "8086:8086"
     env_file:
-      - .env
+      - spring-boot-legacy/.env
     depends_on:
       redis: { condition: service_healthy }
     networks: [payment-network]
@@ -222,7 +222,7 @@ services:
     ports:
       - "8080:8080"
     env_file:
-      - .env
+      - spring-boot-legacy/.env
     depends_on:
       redis: { condition: service_healthy }
     networks: [payment-network]

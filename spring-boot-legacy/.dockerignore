@@ -2,7 +2,7 @@
 # target/
 # **/target/
 .git/
-.idea/
+spring-boot-legacy/.idea/
 .vscode/
 
 # Local GraalVM artifacts

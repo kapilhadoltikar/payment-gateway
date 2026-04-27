@@ -1,6 +1,8 @@
 # Compiled class files
 *.class
-target/
+**/target/
+**/.idea/
+**/*.iml
 *.jar
 *.war
 *.ear
@@ -9,7 +11,7 @@ target/
 *.log
 
 # IDE files
-.idea/
+spring-boot-legacy/.idea/
 *.iml
 .vscode/
 .settings/
@@ -25,7 +27,7 @@ Thumbs.db
 coverage/
 
 # Environment files
-.env
+spring-boot-legacy/.env
 *.env.local
 
 
