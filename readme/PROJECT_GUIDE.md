@@ -19,7 +19,7 @@ This payment gateway implements a **strategic hybrid deployment approach**, cate
 - **45x Faster Cold Starts**: Native services start in 0.4s vs 18s for JVM
 - **Optimal Performance**: JVM services achieve 26% higher throughput for computational workloads
 
-For complete details, see [HYBRID_RUNTIME_STRATEGY.md](./HYBRID_RUNTIME_STRATEGY.md).
+For complete details, see [HYBRID_RUNTIME_STRATEGY.md](HYBRID_RUNTIME_STRATEGY.md).
 
 ---
 
@@ -45,7 +45,7 @@ Services use the `BusinessException` and `ValidationException` classes to signal
 
 ## 1. Microservices Deep Dive
 
-### [API Gateway](./api-gateway)
+### [API Gateway](../api-gateway)
 - **Role**: Entry point and security perimeter.
 - **Runtime**: **GraalVM Native** | *0.4s startup, 120MB memory*
 - **Why Native?**: Instant scaling during traffic bursts; minimal memory footprint for routing logic.
@@ -54,7 +54,7 @@ Services use the `BusinessException` and `ValidationException` classes to signal
     - **Global Filters**: Implements custom filters for JWT validation and request tracing.
     - **Dynamic Routing**: Routes requests to underlying services based on path patterns.
 
-### [Auth Service](./auth-service)
+### [Auth Service](../auth-service)
 - **Role**: Identity and Access Management.
 - **Runtime**: **GraalVM Native** | *0.3s startup, 110MB memory*
 - **Why Native?**: Reduced attack surface for security-critical service; low latency JWT operations.
@@ -63,7 +63,7 @@ Services use the `BusinessException` and `ValidationException` classes to signal
     - **Key Rotation**: Automated RSA key rotation for signing JWT tokens.
     - **Session Management**: Stateless authentication with Redis-backed revocation lists.
 
-### [Payment Service](./payment-service)
+### [Payment Service](../payment-service)
 - **Role**: Core Transaction Processing.
 - **Runtime**: **Standard JVM** | *180 RPS sustained throughput*
 - **Why JVM?**: JIT C2 compiler optimizes complex Saga/Event Sourcing logic for peak performance.
@@ -72,7 +72,7 @@ Services use the `BusinessException` and `ValidationException` classes to signal
     - **Read-Write Split (RWS)**: High-performance database routing via AOP.
     - **CRaC Integration**: Optimized for instantaneous startup in serverless or auto-scaling environments.
 
-### [Vault Service](./vault-service)
+### [Vault Service](../vault-service)
 - **Role**: Secure Data Tokenization (PCI-DSS Scoping).
 - **Runtime**: **GraalVM Native** | *0.35s startup, 105MB memory*
 - **Why Native?**: Static binary isolation ideal for compliance; instant tokenization responses.
@@ -81,7 +81,7 @@ Services use the `BusinessException` and `ValidationException` classes to signal
     - **Static Binary**: Compiled using GraalVM `musl` for a minimal attack surface.
     - **Token Lifecycle**: Manages the mapping between tokens and encrypted PII.
 
-### [Fraud Service](./fraud-service)
+### [Fraud Service](../fraud-service)
 - **Role**: AI-Powered Risk Assessment.
 - **Runtime**: **Standard JVM** | *120 RPS sustained throughput*
 - **Why JVM?**: Heavy computational math for XGBoost/ONNX inference; C2 compiler outperforms Native for CPU-intensive iterations.
@@ -90,7 +90,7 @@ Services use the `BusinessException` and `ValidationException` classes to signal
     - **Real-Time Feature Engineering**: Concurrent feature extraction using Java 25 StructuredTaskScope.
     - **Feedback Loop**: Consumes chargeback events from Kafka for continuous model improvement.
 
-### [Merchant Service](./merchant-service)
+### [Merchant Service](../merchant-service)
 - **Role**: Merchant Onboarding & Management.
 - **Runtime**: **GraalVM Native** | *0.4s startup, 125MB memory*
 - **Why Native?**: Typical CRUD service with low traffic density; perfect for scale-to-zero to save cloud costs.
@@ -99,7 +99,7 @@ Services use the `BusinessException` and `ValidationException` classes to signal
     - **Onboarding Workflow**: Streamlined merchant registration and verification.
     - **Usage Analytics**: Track transaction volumes and API usage per merchant.
 
-### [Notification Service](./notification-service)
+### [Notification Service](../notification-service)
 - **Role**: Webhook Delivery & Event Notifications.
 - **Runtime**: **GraalVM Native** | *0.45s startup, 130MB memory*
 - **Why Native?**: RabbitMQ consumers benefit from high-density worker pods with minimal overhead.

@@ -128,7 +128,7 @@ This workflow follows **banking-sector best practices** with complete infrastruc
 **Access Points**:
 -   **API Gateway**: [http://localhost:8080](http://localhost:8080)
 -   **Swagger UI (Gateway)**: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
--   **Detailed Testing Guide**: See [SWAGGER_TEST_GUIDE.md](SWAGGER_TEST_GUIDE.md) for step-by-step testing workflows.
+-   **Detailed Testing Guide**: See [SWAGGER_TEST_GUIDE.md](readme/SWAGGER_TEST_GUIDE.md) for step-by-step testing workflows.
 
 -   **Payment Database Shell**: `task db-shell`
 -   **RabbitMQ Management**: [http://localhost:15673](http://localhost:15673)
@@ -142,7 +142,7 @@ task audit          # Generate compliance report
 task restart        # Restart all services
 ```
 
-📖 **For Banking Teams**: See [BANKING_SETUP.md](BANKING_SETUP.md) for complete compliance guide, CI/CD integration, and audit procedures.
+📖 **For Banking Teams**: See [BANKING_SETUP.md](readme/BANKING_SETUP.md) for complete compliance guide, CI/CD integration, and audit procedures.
 
 ### Option 2: Hybrid Scaling Workflow
 For teams focusing on infrastructure cost-optimization:
@@ -261,7 +261,7 @@ task audit
 # Output: audit/dependency-tree.txt, audit/dependency-list.txt
 ```
 
-📖 **Complete Banking Guide**: See [BANKING_SETUP.md](BANKING_SETUP.md) for detailed compliance procedures, CI/CD integration, and production deployment guidelines.
+📖 **Complete Banking Guide**: See [BANKING_SETUP.md](readme/BANKING_SETUP.md) for detailed compliance procedures, CI/CD integration, and production deployment guidelines.
 
 ## 📄 API Documentation & Contract Validation
 
@@ -371,9 +371,9 @@ We prioritize system visibility for SREs and Auditors:
 
 ## 📖 Deep-Dive Documentation
 
--   [Banking Compliance Guide](BANKING_SETUP.md) - PCI-DSS and SOC2 alignment details.
--   [Hybrid Runtime Strategy](HYBRID_RUNTIME_STRATEGY.md) - Deep-dive into GraalVM vs JVM trade-offs.
--   [API Testing Guide](SWAGGER_TEST_GUIDE.md) - Step-by-step walkthrough of the payment lifecycle.
+-   [Banking Compliance Guide](readme/BANKING_SETUP.md) - PCI-DSS and SOC2 alignment details.
+-   [Hybrid Runtime Strategy](readme/HYBRID_RUNTIME_STRATEGY.md) - Deep-dive into GraalVM vs JVM trade-offs.
+-   [API Testing Guide](readme/SWAGGER_TEST_GUIDE.md) - Step-by-step walkthrough of the payment lifecycle.
 
 ---
 **Engineering Note**: This project is built using a "Security-First" mindset. All sensitive data is tokenized at the edge, and all financial transactions are idempotent and auditable.
