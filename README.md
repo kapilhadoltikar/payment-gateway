@@ -99,70 +99,9 @@ This diagram visualizes the end-to-end lifecycle of a payment, including synchro
 ### Prerequisites
 -   **Java 21** (Required for Virtual Threads/LTS Stability)
 -   **Docker Desktop** (Running)
--   **[Task](https://taskfile.dev/)** (Recommended: `choco install go-task` on Windows)
 
-### Banking-Grade Quick Start (Recommended)
+### Quick Start
 
-This workflow follows **banking-sector best practices** with complete infrastructure isolation and audit trail capabilities.
-
-1.  **Setup Environment**:
-    ```powershell
-    copy-item .env.example #  to.env
-    ```
-
-2.  **Start Everything** (Infrastructure + All Services):
-    ```powershell
-    task start
-    ```
-    *This single command starts:*
-    - Banking infrastructure (`payment-db`, `payment-mq`)
-    - Core infrastructure (PostgreSQL, Redis, Kafka, RabbitMQ)
-    - All microservices (hybrid Native/JVM)
-
-3.  **Run Banking Test Suite**:
-    ```powershell
-    task test:python
-    ```
-    *Runs comprehensive E2E tests including payment flows, fraud detection, and PCI-DSS compliance validation.*
-
-**Access Points**:
--   **API Gateway**: [http://localhost:8080](http://localhost:8080)
--   **Swagger UI (Gateway)**: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
--   **Detailed Testing Guide**: See [SWAGGER_TEST_GUIDE.md](readme/SWAGGER_TEST_GUIDE.md) for step-by-step testing workflows.
-
--   **Payment Database Shell**: `task db-shell`
--   **RabbitMQ Management**: [http://localhost:15673](http://localhost:15673)
-
-**Essential Commands**:
-```powershell
-task start          # Start everything
-task test:python    # Run E2E banking tests
-task db-shell       # Access payment database
-task audit          # Generate compliance report
-task restart        # Restart all services
-```
-
-📖 **For Banking Teams**: See [BANKING_SETUP.md](readme/BANKING_SETUP.md) for complete compliance guide, CI/CD integration, and audit procedures.
-
-### Option 2: Hybrid Scaling Workflow
-For teams focusing on infrastructure cost-optimization:
-
-1.  **Setup Environment**:
-    ```powershell
-    copy-item .env.example  # to .env
-    ```
-2.  **Verify & Build**:
-    ```powershell
-    task verify  # Runs tests and builds JARs
-    ```
-3.  **Run System**:
-    ```powershell
-    task up:hybrid
-    ```
-    *This starts the infrastructure (Postgres, Kafka, etc.) and runs Control Plane services as Native Images and Data Plane services on the JVM.*
-
-### Option 3: Manual (Maven + Docker)
-If you don't have `task` installed:
 
 1.  **Setup Environment**:
     ```powershell
@@ -222,7 +161,7 @@ The system has been benchmarked under high-concurrency scenarios to verify the *
 | **Messaging** | Apache Kafka | 3.9.0 | Scalable event streaming for audit trails. |
 | **AI/ML** | XGBoost / ONNX | 1.17 | Champion-Challenger architecture for safely testing new models. |
 | **Observability** | OpenTelemetry / Tempo | 1.34 | Distributed tracing for regulatory audit trails. |
-| **CI/CD** | GitHub Actions | N/A | Automated "Native" and "JVM" build pipelines. |
+| **CI/CD** | GitHub Actions | 2.334.0 | Automated "Native" and "JVM" build pipelines. |
 
 ## 📖 Developer Experience
 
@@ -230,36 +169,48 @@ The system is designed for developer productivity:
 -   **OpenAPI / Swagger**: Auto-generated interactive documentation available at `/swagger-ui.html` for all services.
 -   **Spring REST Docs**: Test-driven documentation guarantees accuracy. Snippets are generated during `mvn verify`.
 -   **Gatekeeper CI/CD**: Fully automated pipeline with **GitHub Actions**. Deploys only occur when all 50+ tests and contract validations pass.
--   **Taskfile**: Simple CLI commands for complex ops (e.g., `task build:hybrid`, `task start`, `task test:python`).
 
 ## 🏦 Banking Compliance & Testing
 
-### E2E Test Suite (`tests-e2e/`)
+[//]: # (### E2E Test Suite &#40;`tests-e2e/`&#41;)
 
-Comprehensive **Python pytest** suite for banking-grade validation:
+[//]: # ()
+[//]: # (Comprehensive **Python pytest** suite for banking-grade validation:)
 
--   **Payment Flow Tests**: Success scenarios, validation, idempotency, audit trails
--   **Fraud Detection Tests**: High-amount triggers, rapid transaction detection, fraud scoring
--   **Compliance Tests**: PCI-DSS card masking, transaction immutability, authentication requirements
+[//]: # ()
+[//]: # (-   **Payment Flow Tests**: Success scenarios, validation, idempotency, audit trails)
 
-**Run Tests**:
-```powershell
-task test:python          # Run all E2E tests
-cd tests-e2e && pytest -v # Run with verbose output
-```
+[//]: # (-   **Fraud Detection Tests**: High-amount triggers, rapid transaction detection, fraud scoring)
+
+[//]: # (-   **Compliance Tests**: PCI-DSS card masking, transaction immutability, authentication requirements)
+
+[//]: # ()
+[//]: # (**Run Tests**:)
+
+[//]: # (```powershell)
+
+[//]: # (task test:python          # Run all E2E tests)
+
+[//]: # (cd tests-e2e && pytest -v # Run with verbose output)
+
+[//]: # (```)
 
 ### Compliance Features
 
 -   ✅ **PCI-DSS Level 1**: Card tokenization, data masking, secure vault
 -   ✅ **Audit Trail**: Immutable transaction records with timestamps
 -   ✅ **Transaction Immutability**: Completed transactions cannot be modified
--   ✅ **Dependency Auditability**: Full dependency tree for security audits (`task audit`)
+-   ✅ **Dependency Auditability**: Full dependency tree for security audits
 
-**Generate Audit Report**:
-```powershell
-task audit
-# Output: audit/dependency-tree.txt, audit/dependency-list.txt
-```
+[//]: # (**Generate Audit Report**:)
+
+[//]: # (```powershell)
+
+[//]: # (task audit)
+
+[//]: # (# Output: audit/dependency-tree.txt, audit/dependency-list.txt)
+
+[//]: # (```)
 
 📖 **Complete Banking Guide**: See [BANKING_SETUP.md](readme/BANKING_SETUP.md) for detailed compliance procedures, CI/CD integration, and production deployment guidelines.
 
@@ -308,11 +259,15 @@ The system includes dedicated banking-grade infrastructure for transaction isola
 | **kafka** | Event streaming & audit trail | Apache Kafka | 9092 |
 | **redis** | Caching & rate limiting | Redis 7 | 6379 |
 
-**Access Banking Infrastructure**:
-```powershell
-task db-shell              # Payment database shell
-task docker:up:banking     # Start only banking infrastructure
-```
+[//]: # (**Access Banking Infrastructure**:)
+
+[//]: # (```powershell)
+
+[//]: # (task db-shell              # Payment database shell)
+
+[//]: # (task docker:up:banking     # Start only banking infrastructure)
+
+[//]: # (```)
 
 ### High-Level Context
 
