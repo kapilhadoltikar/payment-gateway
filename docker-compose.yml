@@ -1,4 +1,3 @@
-version: "3.8"
 
 services:
   # Banking Infrastructure - Dedicated Payment Database
