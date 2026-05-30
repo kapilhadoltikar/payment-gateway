@@ -5,8 +5,9 @@
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.2-brightgreen)
-![GraalVM](https://img.shields.io/badge/GraalVM-Native%20Image-orange)
 ![Kafka](https://img.shields.io/badge/Kafka-3.9-black)
+![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3.9.0-red)
+
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
 ![Redis](https://img.shields.io/badge/Redis-7-red)
 
@@ -98,10 +99,100 @@ This diagram visualizes the end-to-end lifecycle of a payment, including synchro
 
 ### Prerequisites
 -   **Java 21** (Required for Virtual Threads/LTS Stability)
--   **Docker Desktop** (Running)
+-   **Docker Desktop** OR **Podman**(Recommended) (Running)
 
-### Quick Start
+### Quick Start (Recommended)
 
+1.  **Setup Environment**:
+    ```powershell
+    copy-item .env.example #  to.env
+    ```
+
+ | Goal | Command                                                     | Result |
+ | :--- |:------------------------------------------------------------| :--- |
+ | Build all images | ``` mvn spring-boot:build-image -DskipTests ```             | All microservices appear in podman images. |
+ | Build one service | ``` mvn spring-boot:build-image -pl payment-service -am ``` | Only builds the payment service and its dependencies. |
+ | Native Image build | ``` mvn spring-boot:build-image -Pnative ```                | Builds a GraalVM binary (very fast startup, but long build time). |
+ | Local Debugging | ``` mvn spring-boot:run -pl auth-service ```                | Runs the service locally with ZGC enabled. |
+    
+
+``` podman images ``` to verify images are built.
+
+```
+docker.io/payment-gateway/api-gateway           1.0.0-SNAPSHOT  7c10281d6c38  46 minutes ago  314 MB
+docker.io/payment-gateway/auth-service          1.0.0-SNAPSHOT  af009c6fe35a  46 minutes ago  326 MB
+docker.io/payment-gateway/payment-service       1.0.0-SNAPSHOT  484421d9aceb  46 minutes ago  345 MB
+docker.io/payment-gateway/merchant-service      1.0.0-SNAPSHOT  dea378786226  46 minutes ago  326 MB
+docker.io/payment-gateway/vault-service         1.0.0-SNAPSHOT  3c42de4174a2  46 minutes ago  326 MB
+docker.io/payment-gateway/notification-service  1.0.0-SNAPSHOT  91befb83395f  46 minutes ago  342 MB
+docker.io/payment-gateway/fraud-service         1.0.0-SNAPSHOT  ae27eea454ef  46 minutes ago  444 MB
+```
+
+``` podman run --rm -it -p 8080:8080 payment-gateway/api-gateway:1.0.0-SNAPSHOT ``` to run the API Gateway locally.
+
+
+2.  **Start Everything** (Infrastructure + All Services):
+
+[//]: # (    ```)
+
+[//]: # (    task start)
+
+[//]: # (    ```)
+
+``` docker-compose up -d ``` if you prefer Docker Compose.
+    *This single command starts:*
+    - Banking infrastructure (`payment-db`, `payment-mq`)
+    - Core infrastructure (PostgreSQL, Redis, Kafka, RabbitMQ)
+    - All microservices (hybrid Native/JVM)
+
+[//]: # (3.  **Run Banking Test Suite**:)
+
+[//]: # (    ```powershell)
+
+[//]: # (    task test:python)
+
+[//]: # (    ```)
+
+[//]: # (    *Runs comprehensive E2E tests including payment flows, fraud detection, and PCI-DSS compliance validation.*)
+
+**Access Points**:
+-   **API Gateway**: [http://localhost:8080](http://localhost:8080)
+-   **Swagger UI (Gateway)**: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+-   **Detailed Testing Guide**: See [SWAGGER_TEST_GUIDE.md](readme/SWAGGER_TEST_GUIDE.md) for step-by-step testing workflows.
+
+-   **Payment Database Shell**: `task db-shell`
+-   **RabbitMQ Management**: [http://localhost:15673](http://localhost:15673)
+
+**Essential Commands**:
+```powershell
+task start          # Start everything
+task test:python    # Run E2E banking tests
+task db-shell       # Access payment database
+task audit          # Generate compliance report
+task restart        # Restart all services
+```
+
+📖 **For Banking Teams**: See [BANKING_SETUP.md](readme/BANKING_SETUP.md) for complete compliance guide, CI/CD integration, and audit procedures.
+
+### Option 2: Hybrid Scaling Workflow
+For teams focusing on infrastructure cost-optimization:
+
+1.  **Setup Environment**:
+    ```powershell
+    copy-item .env.example  # to .env
+    ```
+2.  **Verify & Build**:
+    ```powershell
+    task verify  # Runs tests and builds JARs
+    ```
+3.  **Run System**:
+    ```powershell
+    task up:hybrid
+    ```
+    *This starts the infrastructure (Postgres, Kafka, etc.) and runs Control Plane services as Native Images and Data Plane services on the JVM.*
+
+### Option 3: Manual (Maven + Docker)
+If you don't have `task` installed:
 
 1.  **Setup Environment**:
     ```powershell

@@ -64,6 +64,8 @@
         <byte-buddy.version>1.15.11</byte-buddy.version>
         <spring-restdocs.version>3.0.3</spring-restdocs.version>
         <springdoc.version>2.8.3</springdoc.version>
+
+        <docker.socket>${env.DOCKER_HOST}</docker.socket>
     </properties>
 
 
@@ -229,6 +231,59 @@
                 </plugins>
             </build>
         </profile>
+<!--    </profiles>-->
+
+
+<!--    <profiles>-->
+        <profile>
+            <id>cloud-native</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-maven-plugin</artifactId>
+                        <configuration>
+                            <image>
+                                <env>
+                                    <JAVA_TOOL_OPTIONS>-XX:+UseZGC -XX:+ZGenerational</JAVA_TOOL_OPTIONS>
+                                </env>
+                            </image>
+                            <docker>
+                                <host>${docker.socket}</host>
+                                <tlsVerify>false</tlsVerify>
+                            </docker>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+
+        <profile>
+            <id>os-windows</id>
+            <activation>
+                <os><family>windows</family></os>
+            </activation>
+            <properties>
+                <docker.socket>npipe:////./pipe/podman-machine-default</docker.socket>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>os-linux</id>
+            <activation>
+                <os><family>unix</family></os>
+            </activation>
+            <properties>
+                <docker.socket>unix:///run/user/1000/podman/podman.sock</docker.socket>
+            </properties>
+        </profile>
+
+
+
     </profiles>
 
     <build>
@@ -254,10 +309,16 @@
                         </excludes>
                         <image>
                             <builder>paketobuildpacks/builder-jammy-tiny:latest</builder>
+                            <name>payment-gateway/${project.artifactId}:${project.version}</name>
                             <env>
                                 <BP_JVM_VERSION>21</BP_JVM_VERSION>
+                                <JAVA_TOOL_OPTIONS>-XX:+UseZGC -XX:+ZGenerational</JAVA_TOOL_OPTIONS>
                             </env>
                         </image>
+                        <docker>
+                            <host>${env.DOCKER_HOST}</host>
+                            <tlsVerify>false</tlsVerify>
+                        </docker>
                     </configuration>
                 </plugin>
                 <plugin>
