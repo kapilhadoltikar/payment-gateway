@@ -252,7 +252,7 @@ The system has been benchmarked under high-concurrency scenarios to verify the *
 | **Messaging** | Apache Kafka | 3.9.0 | Scalable event streaming for audit trails. |
 | **AI/ML** | XGBoost / ONNX | 1.17 | Champion-Challenger architecture for safely testing new models. |
 | **Observability** | OpenTelemetry / Tempo | 1.34 | Distributed tracing for regulatory audit trails. |
-| **CI/CD** | GitHub Actions | N/A | Automated "Native" and "JVM" build pipelines. |
+| **CI/CD** | GitHub Actions | 2.334.0 | Automated "Native" and "JVM" build pipelines. |
 
 ## 📖 Developer Experience
 
@@ -260,36 +260,48 @@ The system is designed for developer productivity:
 -   **OpenAPI / Swagger**: Auto-generated interactive documentation available at `/swagger-ui.html` for all services.
 -   **Spring REST Docs**: Test-driven documentation guarantees accuracy. Snippets are generated during `mvn verify`.
 -   **Gatekeeper CI/CD**: Fully automated pipeline with **GitHub Actions**. Deploys only occur when all 50+ tests and contract validations pass.
--   **Taskfile**: Simple CLI commands for complex ops (e.g., `task build:hybrid`, `task start`, `task test:python`).
 
 ## 🏦 Banking Compliance & Testing
 
-### E2E Test Suite (`tests-e2e/`)
+[//]: # (### E2E Test Suite &#40;`tests-e2e/`&#41;)
 
-Comprehensive **Python pytest** suite for banking-grade validation:
+[//]: # ()
+[//]: # (Comprehensive **Python pytest** suite for banking-grade validation:)
 
--   **Payment Flow Tests**: Success scenarios, validation, idempotency, audit trails
--   **Fraud Detection Tests**: High-amount triggers, rapid transaction detection, fraud scoring
--   **Compliance Tests**: PCI-DSS card masking, transaction immutability, authentication requirements
+[//]: # ()
+[//]: # (-   **Payment Flow Tests**: Success scenarios, validation, idempotency, audit trails)
 
-**Run Tests**:
-```powershell
-task test:python          # Run all E2E tests
-cd tests-e2e && pytest -v # Run with verbose output
-```
+[//]: # (-   **Fraud Detection Tests**: High-amount triggers, rapid transaction detection, fraud scoring)
+
+[//]: # (-   **Compliance Tests**: PCI-DSS card masking, transaction immutability, authentication requirements)
+
+[//]: # ()
+[//]: # (**Run Tests**:)
+
+[//]: # (```powershell)
+
+[//]: # (task test:python          # Run all E2E tests)
+
+[//]: # (cd tests-e2e && pytest -v # Run with verbose output)
+
+[//]: # (```)
 
 ### Compliance Features
 
 -   ✅ **PCI-DSS Level 1**: Card tokenization, data masking, secure vault
 -   ✅ **Audit Trail**: Immutable transaction records with timestamps
 -   ✅ **Transaction Immutability**: Completed transactions cannot be modified
--   ✅ **Dependency Auditability**: Full dependency tree for security audits (`task audit`)
+-   ✅ **Dependency Auditability**: Full dependency tree for security audits
 
-**Generate Audit Report**:
-```powershell
-task audit
-# Output: audit/dependency-tree.txt, audit/dependency-list.txt
-```
+[//]: # (**Generate Audit Report**:)
+
+[//]: # (```powershell)
+
+[//]: # (task audit)
+
+[//]: # (# Output: audit/dependency-tree.txt, audit/dependency-list.txt)
+
+[//]: # (```)
 
 📖 **Complete Banking Guide**: See [BANKING_SETUP.md](readme/BANKING_SETUP.md) for detailed compliance procedures, CI/CD integration, and production deployment guidelines.
 
@@ -338,11 +350,15 @@ The system includes dedicated banking-grade infrastructure for transaction isola
 | **kafka** | Event streaming & audit trail | Apache Kafka | 9092 |
 | **redis** | Caching & rate limiting | Redis 7 | 6379 |
 
-**Access Banking Infrastructure**:
-```powershell
-task db-shell              # Payment database shell
-task docker:up:banking     # Start only banking infrastructure
-```
+[//]: # (**Access Banking Infrastructure**:)
+
+[//]: # (```powershell)
+
+[//]: # (task db-shell              # Payment database shell)
+
+[//]: # (task docker:up:banking     # Start only banking infrastructure)
+
+[//]: # (```)
 
 ### High-Level Context
 
