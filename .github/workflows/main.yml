@@ -111,13 +111,13 @@ jobs:
           MAVEN_OPTS: "-Xmx8g"
         run: |
           mvn spring-boot:build-image \
-            -P${{ matrix.profile }} \
-            -Pl ${{ matrix.serviec }} -am \
+            -${{ matrix.is_native == true && '-Pnative' || '' }} \
+            -Pl ${{ matrix.service }} -am \
             -DskipTests
 
       - name: Tag and Push to Github Packages (GHCR)
         run: |
-          LOCAL_IMAGE="payment-gateway/${{ matrix.service }}:1.0.0"
+          LOCAL_IMAGE="${{ matrix.service }}:1.0.0"
           TARGET_IMAGE_LATEST="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:latest"
           TARGET_IMAGE_SHA="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:${{ github.sha }}"
           
