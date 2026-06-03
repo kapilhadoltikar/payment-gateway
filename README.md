@@ -1,16 +1,13 @@
-# 🏦 High-Performance Distributed Payment Gateway
+# High-Performance Distributed Payment Gateway
 
 [![CI/CD Pipeline](https://github.com/kapilhadoltikar/payment-gateway/actions/workflows/main.yml/badge.svg)](https://github.com/kapilhadoltikar/payment-gateway/actions/workflows/main.yml)
-![Coverage](https://img.shields.io/badge/Coverage-93%25-brightgreen)
-
+![Coverage](https://img.shields.io/badge/Coverage-93%25-brightgreen)\
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.2-brightgreen)
 ![Kafka](https://img.shields.io/badge/Kafka-3.9-black)
 ![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3.9.0-red)
-
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
 ![Redis](https://img.shields.io/badge/Redis-7-red)
-
 
 ![License](https://img.shields.io/badge/License-Apache%202.0-orange)
 
@@ -18,20 +15,20 @@
 
 > **Enterprise-Grade Architecture**: A regulatory-compliant payment platform combining **GraalVM Native Image** for instant scaling and **Standard JVM** for high-throughput processing. Designed for **PCI-DSS Level 1** compliance and **Zero Trust** security.
 
-## 🚀 Why This Project? (Banking & Fintech Focus)
+## Why This Project? (Banking & Fintech Focus)
 
 This system addresses critical challenges in the financial sector: **Compliance**, **Integrity**, and **Cost-Efficiency**.
 
--   **🛡️ Banking-Grade Compliance**: Implements a **Zero Trust** security model with **PCI-DSS** ready architecture. Sensitive card data is isolated in a secure **Vault Service** using AES-256-GCM encryption.
--   **💰 Transactional Integrity**: Ensures **100% financial consistency** using the **Saga Pattern** and **Kafka Event Sourcing**. No transaction is lost; audit trails are immutable.
+-   **Banking-Grade Compliance**: Implements a **Zero Trust** security model with **PCI-DSS** ready architecture. Sensitive card data is isolated in a secure **Vault Service** using AES-256-GCM encryption.
+-   **Transactional Integrity**: Ensures **100% financial consistency** using the **Saga Pattern** and **Kafka Event Sourcing**. No transaction is lost; audit trails are immutable.
 
--   **⚡ Hybrid Runtime Strategy**: Orchestrates a bifurcated deployment: **GraalVM Native Images** for the Control Plane (0.4s cold starts, 85% memory saving) vs. **Standard JVM** for the Data Plane (JIT-optimized for mathematical throughput).
--   **🧠 AI-Powered Risk Management (Champion-Challenger)**: A production-grade **Dual Inference Engine** running Logistic Regression (Champion) and XGBoost (Challenger) in parallel. Ensures 0-risk validation of new models while maintaining **<1ms decision latency**.
--   **👁️ Full-Stack Observability**: End-to-end distributed tracing via **OpenTelemetry** and **Tempo** provides complete audit trails for every transaction, satisfying strict regulatory requirements (PSD2/GDPR).
+-   **Hybrid Runtime Strategy**: Orchestrates a bifurcated deployment: **GraalVM Native Images** for the Control Plane (0.4s cold starts, 85% memory saving) vs. **Standard JVM** for the Data Plane (JIT-optimized for mathematical throughput).
+-   **AI-Powered Risk Management (Champion-Challenger)**: A production-grade **Dual Inference Engine** running Logistic Regression (Champion) and XGBoost (Challenger) in parallel. Ensures 0-risk validation of new models while maintaining **<1ms decision latency**.
+-   **Full-Stack Observability**: End-to-end distributed tracing via **OpenTelemetry** and **Tempo** provides complete audit trails for every transaction, satisfying strict regulatory requirements (PSD2/GDPR).
 
 ---
 
-## 🏛️ System Architecture
+## System Architecture
 
 ### 1. Hybrid Lifecycle Mastery
 We optimize infrastructure spend by matching the runtime to the workload:
@@ -90,12 +87,10 @@ This diagram visualizes the end-to-end lifecycle of a payment, including synchro
 5.  **Event-Driven Evolution**: **Notification** and **Merchant** services consume Kafka events asynchronously to update balances and send merchant webhooks via **RabbitMQ**.
 
 
-
-
 ---
 
 
-## 🕹️ Quick Start
+## Quick Start
 
 ### Prerequisites
 -   **Java 21** (Required for Virtual Threads/LTS Stability)
@@ -119,13 +114,13 @@ This diagram visualizes the end-to-end lifecycle of a payment, including synchro
 ``` podman images ``` to verify images are built.
 
 ```
-docker.io/payment-gateway/api-gateway           1.0.0-SNAPSHOT  7c10281d6c38  46 minutes ago  314 MB
-docker.io/payment-gateway/auth-service          1.0.0-SNAPSHOT  af009c6fe35a  46 minutes ago  326 MB
-docker.io/payment-gateway/payment-service       1.0.0-SNAPSHOT  484421d9aceb  46 minutes ago  345 MB
-docker.io/payment-gateway/merchant-service      1.0.0-SNAPSHOT  dea378786226  46 minutes ago  326 MB
-docker.io/payment-gateway/vault-service         1.0.0-SNAPSHOT  3c42de4174a2  46 minutes ago  326 MB
-docker.io/payment-gateway/notification-service  1.0.0-SNAPSHOT  91befb83395f  46 minutes ago  342 MB
-docker.io/payment-gateway/fraud-service         1.0.0-SNAPSHOT  ae27eea454ef  46 minutes ago  444 MB
+docker.io/payment-gateway/api-gateway             314 MB
+docker.io/payment-gateway/auth-service            326 MB
+docker.io/payment-gateway/payment-service         345 MB
+docker.io/payment-gateway/merchant-service        326 MB
+docker.io/payment-gateway/vault-service           326 MB
+docker.io/payment-gateway/notification-service    342 MB
+docker.io/payment-gateway/fraud-service           444 MB
 ```
 
 ``` podman run --rm -it -p 8080:8080 payment-gateway/api-gateway:1.0.0-SNAPSHOT ``` to run the API Gateway locally.
@@ -172,24 +167,38 @@ task audit          # Generate compliance report
 task restart        # Restart all services
 ```
 
-📖 **For Banking Teams**: See [BANKING_SETUP.md](readme/BANKING_SETUP.md) for complete compliance guide, CI/CD integration, and audit procedures.
+**For Banking Teams**: See [BANKING_SETUP.md](readme/BANKING_SETUP.md) for complete compliance guide, CI/CD integration, and audit procedures.
 
-### Option 2: Hybrid Scaling Workflow
-For teams focusing on infrastructure cost-optimization:
+[//]: # (### Option 2: Hybrid Scaling Workflow)
 
-1.  **Setup Environment**:
-    ```powershell
-    copy-item .env.example  # to .env
-    ```
-2.  **Verify & Build**:
-    ```powershell
-    task verify  # Runs tests and builds JARs
-    ```
-3.  **Run System**:
-    ```powershell
-    task up:hybrid
-    ```
-    *This starts the infrastructure (Postgres, Kafka, etc.) and runs Control Plane services as Native Images and Data Plane services on the JVM.*
+[//]: # (For teams focusing on infrastructure cost-optimization:)
+
+[//]: # ()
+[//]: # (1.  **Setup Environment**:)
+
+[//]: # (    ```powershell)
+
+[//]: # (    copy-item .env.example  # to .env)
+
+[//]: # (    ```)
+
+[//]: # (2.  **Verify & Build**:)
+
+[//]: # (    ```powershell)
+
+[//]: # (    task verify  # Runs tests and builds JARs)
+
+[//]: # (    ```)
+
+[//]: # (3.  **Run System**:)
+
+[//]: # (    ```powershell)
+
+[//]: # (    task up:hybrid)
+
+[//]: # (    ```)
+
+[//]: # (    *This starts the infrastructure &#40;Postgres, Kafka, etc.&#41; and runs Control Plane services as Native Images and Data Plane services on the JVM.*)
 
 ### Option 3: Manual (Maven + Docker)
 If you don't have `task` installed:
@@ -221,7 +230,7 @@ If you don't have `task` installed:
 ---
 
 
-## 📊 Performance Benchmarks
+## Performance Benchmarks
 
 The system has been benchmarked under high-concurrency scenarios to verify the **Hybrid Runtime Strategy** and **Virtual Threads** performance.
 
@@ -238,7 +247,7 @@ The system has been benchmarked under high-concurrency scenarios to verify the *
 
 ---
 
-## 💻 Tech Stack
+## Tech Stack
 
 | Component | Technology | Version | Reasoning |
 | :--- | :--- | :--- | :--- |
@@ -254,14 +263,14 @@ The system has been benchmarked under high-concurrency scenarios to verify the *
 | **Observability** | OpenTelemetry / Tempo | 1.34 | Distributed tracing for regulatory audit trails. |
 | **CI/CD** | GitHub Actions | 2.334.0 | Automated "Native" and "JVM" build pipelines. |
 
-## 📖 Developer Experience
+## Developer Experience
 
 The system is designed for developer productivity:
 -   **OpenAPI / Swagger**: Auto-generated interactive documentation available at `/swagger-ui.html` for all services.
 -   **Spring REST Docs**: Test-driven documentation guarantees accuracy. Snippets are generated during `mvn verify`.
 -   **Gatekeeper CI/CD**: Fully automated pipeline with **GitHub Actions**. Deploys only occur when all 50+ tests and contract validations pass.
 
-## 🏦 Banking Compliance & Testing
+## Banking Compliance & Testing
 
 [//]: # (### E2E Test Suite &#40;`tests-e2e/`&#41;)
 
@@ -288,10 +297,10 @@ The system is designed for developer productivity:
 
 ### Compliance Features
 
--   ✅ **PCI-DSS Level 1**: Card tokenization, data masking, secure vault
--   ✅ **Audit Trail**: Immutable transaction records with timestamps
--   ✅ **Transaction Immutability**: Completed transactions cannot be modified
--   ✅ **Dependency Auditability**: Full dependency tree for security audits
+-   **PCI-DSS Level 1**: Card tokenization, data masking, secure vault
+-   **Audit Trail**: Immutable transaction records with timestamps
+-   **Transaction Immutability**: Completed transactions cannot be modified
+-   **Dependency Auditability**: Full dependency tree for security audits
 
 [//]: # (**Generate Audit Report**:)
 
@@ -303,9 +312,9 @@ The system is designed for developer productivity:
 
 [//]: # (```)
 
-📖 **Complete Banking Guide**: See [BANKING_SETUP.md](readme/BANKING_SETUP.md) for detailed compliance procedures, CI/CD integration, and production deployment guidelines.
+**Complete Banking Guide**: See [BANKING_SETUP.md](readme/BANKING_SETUP.md) for detailed compliance procedures, CI/CD integration, and production deployment guidelines.
 
-## 📄 API Documentation & Contract Validation
+## API Documentation & Contract Validation
 
 We maintain high-fidelity documentation through a dual-strategy:
 
@@ -322,7 +331,7 @@ We maintain high-fidelity documentation through a dual-strategy:
 
 ---
 
-## 🏛️ System Architecture
+## System Architecture
 
 ### Microservices Ecosystem
 
@@ -387,26 +396,26 @@ The system includes dedicated banking-grade infrastructure for transaction isola
 
 ---
 
-## 🔧 Technical Deep Dive
+## Technical Deep Dive
 
 ### 1. Performance Engineering (The Hybrid Runtime)
 We optimize based on workload patterns:
 -   **Control Plane (GraalVM Native)**: Services like *API Gateway* and *Auth* handle bursty traffic. Native Image provides **0.4s cold starts**, enabling instant serverless-style scaling.
 -   **Data Plane (JVM 25)**: *Payment* and *Fraud* services perform heavy computation. We use the JIT C2 compiler and **Virtual Threads** (Project Loom) for maximum sustained throughput (**180+ RPS**).
 
-### 2. 🛡️ Security & DevOps Architecture (Zero Trust)
+### 2. Security & DevOps Architecture (Zero Trust)
 This project goes beyond basic authentication:
 -   **Identity-Based Secret Management**: We use **HashiCorp Vault** to inject secrets directly into memory. CI/CD runners access secrets via a restrictive `policy.hcl` (Least Privilege).
 -   **Memory-Safe CI/CD**: The pipeline builds GraalVM images on standard GitHub Runners by intelligently throttling memory (`-J-Xmx5g`).
 -   **Automated Compliance**: PCI-DSS rules (Encryption, Tokenization) are enforced via code and validated in the CI pipeline.
 
-### 3. 🧠 AI-Driven Fraud Detection (Champion-Challenger)
+### 3. AI-Driven Fraud Detection (Champion-Challenger)
 A dual-model architecture designed for **Zero-Risk Model Evolution**:
 1.  **Parallel Execution**: Every transaction is scored by both the *Champion* (Logistic Regression, 0.8ms) and *Challenger* (XGBoost, 4.5ms) simultaneously using **Virtual Threads**.
 2.  **Shadow Mode**: The Challenger runs in shadow mode, logging "disagreements" to a dedicated database without affecting production decisions.
 3.  **Live Calibration**: Data Science teams monitor live performance metrics (Precision/Recall) via Grafana before promoting the Challenger.
 
-### 4. 👁️ Operational Excellence (Observability stack)
+### 4. Operational Excellence (Observability stack)
 We prioritize system visibility for SREs and Auditors:
 -   **Distributed Tracing**: `OpenTelemetry` agents trace requests across all 7 microservices (Gateway -> Auth -> Payment -> Fraud).
 -   **Metrics**: `Prometheus` scrapes JVM and business metrics (RPS, Latency, Fraud Rates).
@@ -415,7 +424,7 @@ We prioritize system visibility for SREs and Auditors:
 ---
 
 
-## 📖 Deep-Dive Documentation
+## Deep-Dive Documentation
 
 -   [Banking Compliance Guide](readme/BANKING_SETUP.md) - PCI-DSS and SOC2 alignment details.
 -   [Hybrid Runtime Strategy](readme/HYBRID_RUNTIME_STRATEGY.md) - Deep-dive into GraalVM vs JVM trade-offs.
