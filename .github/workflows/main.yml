@@ -60,7 +60,6 @@ jobs:
       matrix:
         service:
           [
-            common,
             api-gateway,
             auth-service,
             payment-service,
@@ -70,8 +69,6 @@ jobs:
             fraud-service,
           ]
         include:
-          - service: common
-            is_native: true
           - service: api-gateway
             is_native: true
           - service: auth-service
@@ -90,6 +87,16 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set up Swap Space (10GB)
+        run: |
+          sudo fallocate -l 10G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          sudo sysctl vm.swappiness=10
+          df -h
+          free -m
 
       - name: Set up GraalVM JDK 21
         uses: graalvm/setup-graalvm@v1
@@ -111,13 +118,13 @@ jobs:
           MAVEN_OPTS: "-Xmx8g"
         run: |
           mvn spring-boot:build-image \
-            -${{ matrix.is_native == true && '-Pnative' || '' }} \
-            -Pl ${{ matrix.service }} -am \
+            -${{ matrix.is_native == true && '-Pnative' || '-Pjvm' }} \
+            -pl ${{ matrix.service }} -am \
             -DskipTests
 
       - name: Tag and Push to Github Packages (GHCR)
         run: |
-          LOCAL_IMAGE="${{ matrix.service }}:1.0.0"
+          LOCAL_IMAGE="payment-gateway/${{ matrix.service }}:1.0.0-SNAPSHOT"
           TARGET_IMAGE_LATEST="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:latest"
           TARGET_IMAGE_SHA="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:${{ github.sha }}"
           

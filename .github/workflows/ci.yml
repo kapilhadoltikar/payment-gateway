@@ -15,30 +15,33 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+      - name: Set up Swap space (10GB)
+        run: |
+          sudo fallocate -l 10G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          sudo sysctl vm.swappiness=10
+          df -h
+          free -m
+
+      - name: Set up GraalVM JDK 21
+        uses: graalvm/setup-graalvm@v1
         with:
           java-version: "21"
-          distribution: "oracle"
+          distribution: "graalvm"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           cache: "maven"
-
-      - name: Import Secrets from Vault
-        uses: hashicorp/vault-action@v3
-        with:
-          url: ${{ secrets.VAULT_ADDR }}
-          token: ${{ secrets.VAULT_TOKEN }}
-          secrets: |
-            secret/data/payment-gateway/prod *
 
       - name: Build with Maven (Memory Optimized)
         env:
-          MAVEN_OPTS: "-Xmx5g"
+          MAVEN_OPTS: "-Xmx6g"
         run: mvn clean install -DskipTests
 
       - name: Build Native Image (Validation)
         env:
-          MAVEN_OPTS: "-Xmx5g"
+          MAVEN_OPTS: "-Xmx6g"
         run: |
           mvn -Pnative native:compile \
           -pl api-gateway \
-          -Dnative-image.buildArgs="-J-Xmx5g --parallelism=2"
+          -Dnative-image.buildArgs="-J-Xmx6g --parallelism=2"
