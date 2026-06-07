@@ -1,11 +1,11 @@
 package com.paymentgateway.auth.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paymentgateway.auth.dto.AuthRequest;
 import com.paymentgateway.auth.dto.AuthResponse;
 import com.paymentgateway.auth.dto.RegisterRequest;
 import com.paymentgateway.auth.service.AuthService;
 import com.paymentgateway.common.config.JwtUtil;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;

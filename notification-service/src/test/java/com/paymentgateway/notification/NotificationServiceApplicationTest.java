@@ -2,10 +2,10 @@ package com.paymentgateway.notification;
 
 import com.paymentgateway.notification.messaging.RabbitMQProducer;
 import org.junit.jupiter.api.Test;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest(properties = {

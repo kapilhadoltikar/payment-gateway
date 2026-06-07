@@ -1,9 +1,7 @@
 package com.paymentgateway.fraud;
 
-import com.paymentgateway.fraud.FraudServiceApplication;
-import com.paymentgateway.fraud.dto.FraudCheckRequest;
 import com.paymentgateway.common.dto.ApiResponse;
-
+import com.paymentgateway.fraud.dto.FraudCheckRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

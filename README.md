@@ -1,6 +1,6 @@
 # High-Performance Distributed Payment Gateway
 
-[![CI/CD Pipeline](https://github.com/kapilhadoltikar/payment-gateway/actions/workflows/main.yml/badge.svg)](https://github.com/kapilhadoltikar/payment-gateway/actions/workflows/main.yml)
+[![CI/CD Pipeline](https://github.com/kapilhadoltikar/payment-gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/kapilhadoltikar/payment-gateway/actions/workflows/ci.yml)
 ![Coverage](https://img.shields.io/badge/Coverage-93%25-brightgreen)\
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.2-brightgreen)

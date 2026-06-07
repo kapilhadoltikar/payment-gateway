@@ -1,7 +1,14 @@
 package com.paymentgateway.fraud.model;
 
 import com.paymentgateway.fraud.dto.FraudResult.FraudDecision;
-import jakarta.persistence.*;
+import jakarta.persistence.Table;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -1,12 +1,12 @@
 package com.paymentgateway.auth.service;
 
-import com.paymentgateway.common.exception.BusinessException;
 import com.paymentgateway.auth.dto.AuthRequest;
 import com.paymentgateway.auth.dto.AuthResponse;
 import com.paymentgateway.auth.dto.RegisterRequest;
 import com.paymentgateway.auth.entity.User;
 import com.paymentgateway.auth.repository.UserRepository;
 import com.paymentgateway.common.config.JwtUtil;
+import com.paymentgateway.common.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
