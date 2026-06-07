@@ -1,16 +1,16 @@
 package com.paymentgateway.vault.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paymentgateway.common.dto.vault.CardDataResponse;
 import com.paymentgateway.common.dto.vault.TokenizeRequest;
 import com.paymentgateway.common.dto.vault.TokenizeResponse;
 import com.paymentgateway.vault.service.VaultService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;

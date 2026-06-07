@@ -1,14 +1,13 @@
 package com.paymentgateway.payment.config;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import org.crac.Context;
 import org.crac.Core;
 import org.crac.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 
 /**
  * CRaC (Coordinated Restore at Checkpoint) Configuration
@@ -17,13 +16,13 @@ import jakarta.annotation.PreDestroy;
 @Component
 public class CRaCConfig implements Resource {
 
-    private static final Logger logger = LoggerFactory.getLogger(CRaCConfig.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CRaCConfig.class);
 
     @PostConstruct
     public void init() {
         // Register this resource with CRaC
         Core.getGlobalContext().register(this);
-        logger.info("CRaC resource registered for checkpoint/restore operations");
+        LOGGER.info("CRaC resource registered for checkpoint/restore operations");
     }
 
     /**
@@ -32,18 +31,18 @@ public class CRaCConfig implements Resource {
      */
     @Override
     public void beforeCheckpoint(Context<? extends Resource> context) throws Exception {
-        logger.info("CRaC beforeCheckpoint: Preparing application state for checkpoint");
+        LOGGER.info("CRaC beforeCheckpoint: Preparing application state for checkpoint");
 
         // Close network connections
-        logger.info("Closing network connections...");
+        LOGGER.info("Closing network connections...");
 
         // Flush caches
-        logger.info("Flushing caches...");
+        LOGGER.info("Flushing caches...");
 
         // Prepare database connections for checkpoint
-        logger.info("Preparing database connections for checkpoint...");
+        LOGGER.info("Preparing database connections for checkpoint...");
 
-        logger.info("Application state prepared for checkpoint");
+        LOGGER.info("Application state prepared for checkpoint");
     }
 
     /**
@@ -52,19 +51,19 @@ public class CRaCConfig implements Resource {
      */
     @Override
     public void afterRestore(Context<? extends Resource> context) throws Exception {
-        logger.info("CRaC afterRestore: Restoring application state from checkpoint");
+        LOGGER.info("CRaC afterRestore: Restoring application state from checkpoint");
 
         // Reconnect to databases
-        logger.info("Reconnecting to databases...");
+        LOGGER.info("Reconnecting to databases...");
 
         // Reinitialize connection pools
-        logger.info("Reinitializing connection pools...");
+        LOGGER.info("Reinitializing connection pools...");
 
         // Warmup critical code paths
-        logger.info("Warming up critical code paths...");
+        LOGGER.info("Warming up critical code paths...");
         performWarmup();
 
-        logger.info("Application state restored from checkpoint - ready to serve requests");
+        LOGGER.info("Application state restored from checkpoint - ready to serve requests");
     }
 
     /**
@@ -73,7 +72,7 @@ public class CRaCConfig implements Resource {
     private void performWarmup() {
         try {
             // Execute critical code paths to trigger JIT compilation
-            logger.info("Executing warmup routines...");
+            LOGGER.info("Executing warmup routines...");
 
             // Simulate payment processing warmup
             for (int i = 0; i < 100; i++) {
@@ -82,14 +81,14 @@ public class CRaCConfig implements Resource {
                 // Warmup HTTP clients
             }
 
-            logger.info("Warmup complete - JIT compiler primed");
+            LOGGER.info("Warmup complete - JIT compiler primed");
         } catch (Exception e) {
-            logger.error("Error during warmup", e);
+            LOGGER.error("Error during warmup", e);
         }
     }
 
     @PreDestroy
     public void cleanup() {
-        logger.info("CRaC resource cleanup");
+        LOGGER.info("CRaC resource cleanup");
     }
 }

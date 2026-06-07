@@ -111,8 +111,9 @@ public class FraudDetectionService {
     }
 
     private double runInference(OrtSession session, float[] features, String modelName) throws OrtException {
-        if (session == null)
+        if (session == null) {
             return 0.05; // Default safe score
+        }
 
         long startTime = System.nanoTime();
         long[] shape = new long[] { 1, features.length };
@@ -179,10 +180,12 @@ public class FraudDetectionService {
     }
 
     private FraudResult.FraudDecision scoreToDecision(double score) {
-        if (score > 0.8)
+        if (score > 0.8) {
             return FraudResult.FraudDecision.BLOCK;
-        if (score > 0.3)
+        }
+        if (score > 0.3) {
             return FraudResult.FraudDecision.MANUAL_REVIEW;
+        }
         return FraudResult.FraudDecision.APPROVE;
     }
 

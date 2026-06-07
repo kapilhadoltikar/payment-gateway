@@ -1,13 +1,13 @@
+import json
 import numpy as np
+import onnxmltools
+import os
+import xgboost as xgb
+from skl2onnx import convert_sklearn
+from skl2onnx.common.data_types import FloatTensorType
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
-import xgboost as xgb
-import onnxmltools
-from skl2onnx import convert_sklearn
-from skl2onnx.common.data_types import FloatTensorType
-import os
-import json
 
 # Create models directory if not exists
 if not os.path.exists("models"):

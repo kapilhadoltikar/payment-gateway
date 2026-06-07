@@ -54,8 +54,9 @@ public class FeatureScaler {
      * Apply Standard Scaling: z = (x - u) / s
      */
     public float[] scale(float[] features) {
-        if (!isInitialized)
+        if (!isInitialized) {
             return features;
+        }
 
         float[] scaled = new float[features.length];
         for (int i = 0; i < features.length; i++) {

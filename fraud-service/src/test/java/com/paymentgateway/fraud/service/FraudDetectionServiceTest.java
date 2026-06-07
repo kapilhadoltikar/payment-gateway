@@ -2,9 +2,9 @@ package com.paymentgateway.fraud.service;
 
 import ai.onnxruntime.OrtEnvironment;
 import ai.onnxruntime.OrtSession;
+import com.paymentgateway.fraud.config.OpenApiConfig;
 import com.paymentgateway.fraud.dto.FraudCheckRequest;
 import com.paymentgateway.fraud.dto.FraudResult;
-import com.paymentgateway.fraud.config.OpenApiConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,7 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class FraudDetectionServiceTest {

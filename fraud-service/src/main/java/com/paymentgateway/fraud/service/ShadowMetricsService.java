@@ -65,14 +65,18 @@ public class ShadowMetricsService {
                 boolean champBlock = isBlock(champ);
                 boolean challBlock = isBlock(chall);
 
-                if (champBlock && challBlock)
+                if (champBlock && challBlock) {
                         return DisagreementType.BOTH_FRAUD;
-                if (!champBlock && !challBlock)
+                }
+                if (!champBlock && !challBlock) {
                         return DisagreementType.BOTH_LEGIT;
-                if (!champBlock && challBlock)
+                }
+                if (!champBlock && challBlock) {
                         return DisagreementType.MISSED_FRAUD; // Champion missed it
-                if (champBlock && !challBlock)
+                }
+                if (champBlock && !challBlock) {
                         return DisagreementType.FALSE_POSITIVE; // Champion was too aggressive
+                }
 
                 return DisagreementType.AGREEMENT;
         }
